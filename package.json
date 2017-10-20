@@ -1,0 +1,37 @@
+{
+  "name": "tetris",
+  "version": "0.0.1",
+  "description": "Multiplayer Tetris game build using Node.js, Socket.IO, and Phaser",
+  "private": true,
+  "main": "src/server/index.js",
+  "engines": {
+    "node": "~8.3.0",
+    "npm": "5.4.2"
+  },
+  "scripts": {
+    "start": "node ./src/server/index.js",
+    "clean": "rm ./public/js/bundle.js; exit 0",
+    "build": "webpack --config ./webpack.config.js --progress --colors",
+    "dev": "nodemon -i 'public' -i 'src/client' ./src/server/index.js",
+    "test": "NODE_ENV=test nodemon --exec 'mocha --recursive -R spec'",
+    "postinstall": "npm run build"
+  },
+  "author": "Vincent Ho",
+  "license": "ISC",
+  "devDependencies": {
+    "chai": "4.1.2",
+    "mocha": "4.0.1",
+    "webpack-middleware": "1.5.1"
+  },
+  "dependencies": {
+    "babel-core": "6.26.0",
+    "babel-loader": "7.1.2",
+    "babel-preset-es2015": "6.24.1",
+    "babel-preset-es2015-node6": "0.4.0",
+    "babel-preset-stage-2": "6.24.1",
+    "express": "4.16.1",
+    "nodemon": "1.12.1",
+    "socket.io": "2.0.3",
+    "webpack": "3.6.0"
+  }
+}
