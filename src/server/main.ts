@@ -5,7 +5,6 @@ import send from 'koa-send';
 import cors from '@koa/cors';
 import http from 'http';
 import socketio from 'socket.io';
-import sslify from 'koa-sslify';
 import { WebSocketServer } from './web-socket-server';
 
 const app = new Koa();
@@ -17,8 +16,17 @@ const server = http.createServer(app.callback());
 const io = socketio(server);
 WebSocketServer.setup(io);
 
+const {
+  default: sslify, // middleware factory
+  xForwardedProtoResolver: resolver, // resolver needed
+} = require('koa-sslify');
+app.use(sslify({ resolver }));
 if (process.env.NODE_ENV === 'production') {
-  app.use(sslify());
+  const {
+    default: sslify, // middleware factory
+    xForwardedProtoResolver: resolver, // resolver needed
+  } = require('koa-sslify');
+  app.use(sslify({ resolver }));
 }
 app.use(
   cors({
