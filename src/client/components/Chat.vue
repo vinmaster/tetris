@@ -10,13 +10,22 @@
       </form>
     </dialog>
 
-    <button
-      type="button"
-      class="nes-btn is-primary"
-      onclick="document.getElementById('dialog-default').showModal();"
-    >
-      Connected Users: {{ connectedUsers.length }}
-    </button>
+    <div class="top">
+      <button class="toggle" type="button" @click="toggle()">
+        <svg viewBox="0 0 100 80" width="40" height="40">
+          <rect width="100" height="15"></rect>
+          <rect y="25" width="100" height="15"></rect>
+          <rect y="50" width="100" height="15"></rect>
+        </svg>
+      </button>
+      <button
+        type="button"
+        class="users-btn nes-btn is-primary"
+        onclick="document.getElementById('dialog-default').showModal();"
+      >
+        Connected Users: {{ connectedUsers.length }}
+      </button>
+    </div>
 
     <div class="chat-header">
       <h1 class="title">Chat</h1>
@@ -32,11 +41,9 @@
         <span>[</span>
         <span class="timestamp">{{ message.timestamp | dateFormat('hh:mm:ssA') }}</span>
         <span>] </span>
-        <span
-          class="username"
-          :style="{ color: message.usernameColor }"
-          >{{ message.username }}</span
-        >
+        <span class="username" :style="{ color: message.usernameColor }">{{
+          message.username
+        }}</span>
         <span>: </span>
         <span class="text">{{ message.text }}</span>
       </div>
@@ -51,7 +58,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue } from 'vue-property-decorator';
+import { Component, Prop, Vue, Emit } from 'vue-property-decorator';
 // @ts-ignore
 import dialogPolyfill from 'dialog-polyfill';
 
@@ -90,10 +97,12 @@ export default class Chat extends Vue {
         // that.setup();
       },
       disconnect() {
-        // that.teardown();
+        that.teardown();
+      },
+      connect_error() {
+        that.teardown();
       },
       LIST_USERS(users) {
-        console.log('list', users);
         that.onListUsers(users);
       },
       CHAT_MESSAGE(data) {
@@ -132,6 +141,9 @@ export default class Chat extends Vue {
     }
   }
 
+  @Emit()
+  toggle() {}
+
   sendMessage() {
     this.$socket.client.emit('CHAT_MESSAGE', this.userInput);
 
@@ -144,9 +156,7 @@ export default class Chat extends Vue {
 
   onNewMessage(data: any) {
     data.timestamp = new Date(data.timestamp);
-    const color = this.connectedUsers.find(
-      (u) => u.username === data.username
-    )?.usernameColor;
+    const color = this.connectedUsers.find((u) => u.username === data.username)?.usernameColor;
     data.usernameColor = color || 'white';
     this.messages.push(data);
 
@@ -203,6 +213,18 @@ dialog {
 
 .nes-container {
   padding: 0;
+}
+
+.top {
+  display: flex;
+}
+
+.toggle {
+  height: 38px;
+}
+
+.users-btn {
+  flex: 1 1;
 }
 
 .chat-header {

@@ -1,9 +1,19 @@
 <template>
   <div id="app">
     <div class="content">WORK IN PROGRESS</div>
-    <div class="chat">
-      <chat></chat>
-    </div>
+    <transition name="slide-fade">
+      <button class="toggle" type="button" @click="toggleChat()" v-if="!chatOpen">
+        <svg viewBox="0 0 100 80" width="40" height="40">
+          <rect width="100" height="15"></rect>
+          <rect y="25" width="100" height="15"></rect>
+          <rect y="50" width="100" height="15"></rect>
+        </svg>
+      </button>
+
+      <div class="chat" v-if="chatOpen">
+        <chat @toggle="toggleChat"></chat>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -18,22 +28,28 @@ import Chat from './components/Chat.vue';
   },
   sockets: {
     connect() {
-      console.log('connected');
+      console.log('[connected]');
       const username = prompt('Please enter a username:');
       this.$socket.client.emit('REGISTER', username);
     },
     disconnect() {
-      console.log('disconnected');
+      console.log('[disconnected]');
     },
     LOGS(data) {
-      console.log('LOGS', data);
+      console.log('[LOGS]', data);
     },
     FORCE_REFRESH() {
       window.location.reload(true);
     },
   },
 })
-export default class App extends Vue {}
+export default class App extends Vue {
+  chatOpen = false;
+
+  toggleChat(msg: any) {
+    this.chatOpen = !this.chatOpen;
+  }
+}
 </script>
 
 <style>
@@ -95,7 +111,7 @@ samp {
   width: 500px;
 }
 
-@media only screen and (max-width: 500px)  {
+@media only screen and (max-width: 500px) {
   .chat {
     display: none;
   }
@@ -103,5 +119,17 @@ samp {
 
 [v-cloak] {
   display: none;
+}
+
+.slide-fade-enter-active {
+  transition: all 0.3s ease;
+}
+.slide-fade-leave-active {
+  transition: all 0.8s cubic-bezier(1, 0.5, 0.8, 1);
+}
+.slide-fade-enter, .slide-fade-leave-to
+/* .slide-fade-leave-active below version 2.1.8 */ {
+  transform: translateX(500px);
+  opacity: 0;
 }
 </style>
