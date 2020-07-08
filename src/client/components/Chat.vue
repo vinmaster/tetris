@@ -2,7 +2,7 @@
   <section class="chat-container nes-container is-dark">
     <dialog class="nes-dialog" id="dialog-default">
       <form method="dialog">
-        <pre class="dialog-content">{{ Object.values(connectedUsers) }}</pre>
+        <pre class="dialog-content">{{ connectedUsers }}</pre>
         <menu class="dialog-menu">
           <button class="nes-btn">Close</button>
           <!-- <button class="nes-btn is-primary">Confirm</button> -->
@@ -15,7 +15,7 @@
       class="nes-btn is-primary"
       onclick="document.getElementById('dialog-default').showModal();"
     >
-      Connected Users: {{ Object.keys(connectedUsers).length }}
+      Connected Users: {{ connectedUsers.length }}
     </button>
 
     <div class="chat-header">
@@ -27,12 +27,16 @@
       </div>
     </div>
     <hr />
-    <section class="message-list">
+    <section class="message-list" ref="messageList">
       <div class="message" v-for="(message, index) in messages" :key="index">
         <span>[</span>
-        <span class="timestamp">{{ message.timestamp | dateFormat('hh:mmA') }}</span>
+        <span class="timestamp">{{ message.timestamp | dateFormat('hh:mm:ssA') }}</span>
         <span>] </span>
-        <span class="username">{{ message.username }}</span>
+        <span
+          class="username"
+          :style="{ color: message.usernameColor }"
+          >{{ message.username }}</span
+        >
         <span>: </span>
         <span class="text">{{ message.text }}</span>
       </div>
@@ -51,6 +55,11 @@ import { Component, Prop, Vue } from 'vue-property-decorator';
 // @ts-ignore
 import dialogPolyfill from 'dialog-polyfill';
 
+interface User {
+  username: string;
+  usernameColor: string;
+}
+
 interface Message {
   text: string;
   timestamp: Date;
@@ -60,7 +69,7 @@ interface Message {
 @Component
 export default class Chat extends Vue {
   isOnline = false;
-  connectedUsers = {};
+  connectedUsers: User[] = [];
   userInput = '';
   messages: Message[] = [
     {
@@ -84,7 +93,8 @@ export default class Chat extends Vue {
         // that.teardown();
       },
       LIST_USERS(users) {
-        that.onConnectedUsers(users);
+        console.log('list', users);
+        that.onListUsers(users);
       },
       CHAT_MESSAGE(data) {
         that.onNewMessage(data);
@@ -118,7 +128,7 @@ export default class Chat extends Vue {
 
     const element = document.querySelector('.chat-input');
     if (element) {
-      element.removeEventListener('keyup', this.inputEvent.bind(this));
+      element.removeEventListener('keydown', this.inputEvent.bind(this));
     }
   }
 
@@ -133,12 +143,20 @@ export default class Chat extends Vue {
   }
 
   onNewMessage(data: any) {
-    console.log('CHAT_MESSAGE', data);
     data.timestamp = new Date(data.timestamp);
+    const color = this.connectedUsers.find(
+      (u) => u.username === data.username
+    )?.usernameColor;
+    data.usernameColor = color || 'white';
     this.messages.push(data);
+
+    const messageList = this.$refs.messageList as Element;
+    this.$nextTick(() => {
+      messageList.scrollTop = messageList.scrollHeight;
+    });
   }
 
-  onConnectedUsers(users: any) {
+  onListUsers(users: any) {
     this.connectedUsers = users;
   }
 
@@ -200,6 +218,7 @@ dialog {
 
 .status {
   margin-left: 5px;
+  padding: 5px;
 }
 
 .status.green {
@@ -227,6 +246,7 @@ dialog > form {
 .dialog-menu {
   align-self: center;
   padding: 0;
+  margin-bottom: 0;
 }
 
 hr {
@@ -248,7 +268,7 @@ hr {
 }
 
 .message {
-  font-size: 16px;
+  font-size: 18px;
   line-height: 18px;
 }
 

@@ -1,8 +1,9 @@
 import { Utility } from '../common/utility';
 
 interface User {
-  username: string;
   id: string;
+  username: string;
+  usernameColor: string;
 }
 
 export class WebSocketServer {
@@ -18,28 +19,14 @@ export class WebSocketServer {
     const obj = Utility.getObjectSlice(socket, ['rooms', 'connected', 'id']);
     // console.log('connected', obj);
 
-    const broadcastUsers = () => {
-      let output;
-      if (this.isAdmin(socket)) {
-        output = this.users;
-      } else {
-        output = Object.assign(
-          {},
-          Object.keys(this.users).map((id) => this.getUser(id).username)
-        );
-      }
-
-      this.io.emit('LIST_USERS', output);
-    };
-
     socket.on('disconnect', () => {
       this.removeUser(socket.id);
 
-      broadcastUsers();
+      this.broadcastUsers(socket);
     });
 
     socket.on('LIST_USERS', () => {
-      broadcastUsers();
+      this.broadcastUsers(socket);
     });
 
     socket.on('REGISTER', (username: string) => {
@@ -62,27 +49,28 @@ export class WebSocketServer {
   }
 
   static processMessage(socket: SocketIO.Socket, message: string): any {
-    let output: any = message.trim();
+    let input: any = message.trim();
     let isCommand = true;
     let username = this.getUser(socket.id).username;
 
     // Check if it is a command
-    if (output.length <= 1 || output[0] !== '/') isCommand = false;
+    if (input.length <= 1 || input[0] !== '/') isCommand = false;
 
     if (!isCommand) {
       this.io.to('chatroom').emit('CHAT_MESSAGE', {
         username,
-        text: output,
+        text: input,
         timestamp: +new Date(),
       });
       return;
     }
 
     // Handle commands
-    const argStr = output.substring(1, output.length).toLowerCase();
+    const argStr = input.substring(1, input.length).toLowerCase();
     const args = argStr.split(' ').filter((a) => a.length !== 0);
     const command = args[0];
     const timestamp = +new Date();
+    let output = input;
 
     switch (command) {
       case 'time':
@@ -96,12 +84,14 @@ export class WebSocketServer {
       case 'join':
         if (args[1] === 'admins') {
           socket.join('admins');
+          output = 'You are now admin';
 
           this.io.to(socket.id).emit('CHAT_MESSAGE', {
             username: 'SYSTEM',
-            text: 'You are now admin',
+            text: output,
             timestamp,
           });
+          this.broadcastUsers(socket);
         } else {
           socket.join('chatroom');
           output = `${username} has joined the chatroom`;
@@ -120,10 +110,11 @@ export class WebSocketServer {
       case 'leave':
         if (args[1] === 'admins') {
           socket.leave('admins');
+          output = 'You are now not admin';
 
           this.io.to(socket.id).emit('CHAT_MESSAGE', {
             username: 'SYSTEM',
-            text: 'You are now not admin',
+            text: output,
             timestamp,
           });
         } else {
@@ -141,8 +132,8 @@ export class WebSocketServer {
           });
         }
         break;
-      case 'listusers':
-        if (this.isAdmin(socket)) {
+      case 'users':
+        if (this.isAdmin(socket.id)) {
           output = this.users;
         } else {
           output = Object.assign(
@@ -157,15 +148,44 @@ export class WebSocketServer {
           timestamp,
         });
         break;
+      case 'setcolor':
+        if (args[1].length > 0) {
+          this.users[socket.id].usernameColor = args[1];
+          this.broadcastUsers(socket);
+          output = 'Your username color has changed';
+        } else {
+          output = 'Invalid color';
+        }
+        this.io.to(socket.id).emit('CHAT_MESSAGE', {
+          username: 'SYSTEM',
+          text: output,
+          timestamp,
+        });
+        break;
+      case 'role':
+        if (this.isAdmin(socket.id)) {
+          output = 'Admin';
+        } else {
+          output = 'User';
+        }
+
+        this.io.to(socket.id).emit('CHAT_MESSAGE', {
+          username: 'SYSTEM',
+          text: output,
+          timestamp,
+        });
+        break;
       case 'forcerefresh':
-        if (this.isAdmin(socket)) {
+        if (this.isAdmin(socket.id)) {
           this.io.emit('FORCE_REFRESH');
         }
+        output = 'Refreshing';
         break;
       case 'help':
         output = `
 /time - Get time
-/listusers - List the connected users
+/users - List the connected users
+/setcolor - Set username color
 /join - Join chatroom
 /leave - Leave chatroom
 /help - List commands`;
@@ -176,7 +196,7 @@ export class WebSocketServer {
         });
         break;
       default:
-        output = 'Invalid Command';
+        output = 'Invalid command';
         this.io.to(socket.id).emit('CHAT_MESSAGE', {
           username: 'SYSTEM',
           text: output,
@@ -188,31 +208,37 @@ export class WebSocketServer {
     const log = {
       issuerId: socket.id,
       issuer: this.getUser(socket.id).username,
+      input,
       text: output,
       timestamp,
     };
-    if (this.isAdmin(socket)) {
+    if (this.isAdmin(socket.id)) {
       // Show to other admins except sender
       socket.to('admins').emit('LOGS', log);
     } else {
-      // Show admins commands that are ran
+      // Show admins commands that ran
       this.io.to('admins').emit('LOGS', log);
     }
-    // private message
-    // if (this.isAdmin(socket.id)) {
-    //   this.io.to(socket.id).emit('CHAT_MESSAGE', output);
-    // }
   }
 
-  static isAdmin(id: string | SocketIO.Socket) {
-    if (typeof id === 'string') {
-      const room = this.getRoom('admins');
-      if (!room) return false;
-      const adminIds = Object.keys(room.sockets);
-      return adminIds.includes(id);
+  static broadcastUsers(socket: SocketIO.Socket) {
+    let output;
+    if (this.isAdmin(socket.id)) {
+      output = Object.values(this.users);
     } else {
-      return !!id.rooms['admins'];
+      output = Object.values(this.users).map((u) =>
+        Utility.getObjectSlice(u, ['username', 'usernameColor'])
+      );
     }
+
+    this.io.emit('LIST_USERS', output);
+  }
+
+  static isAdmin(id: string) {
+    const room = this.getRoom('admins');
+    if (!room) return false;
+    const adminIds = Object.keys(room.sockets);
+    return adminIds.includes(id);
   }
 
   // Can return undefined if room is empty
@@ -233,9 +259,12 @@ export class WebSocketServer {
       });
     }
 
+    const usernameColor = Utility.getRandomColor();
+
     this.users[obj.id.toString()] = {
       id: obj.id,
       username: obj.username,
+      usernameColor,
     };
   }
 
