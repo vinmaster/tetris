@@ -1,37 +1,52 @@
 {
   "name": "tetris",
-  "version": "0.0.1",
-  "description": "Multiplayer Tetris game build using Node.js, Socket.IO, and Phaser",
+  "version": "1.0.0",
   "private": true,
-  "main": "src/server/index.js",
+  "description": "Multiplayer Tetris game build using Node.js, Socket.IO, and Vue.js",
+  "author": {
+    "name": "Vincent Ho"
+  },
   "engines": {
-    "node": "~8.3.0",
-    "npm": "5.4.2"
+    "node": "12.x"
   },
   "scripts": {
-    "start": "node ./src/server/index.js",
-    "clean": "rm ./public/js/bundle.js; exit 0",
-    "build": "webpack --config ./webpack.config.js --progress --colors",
-    "dev": "nodemon -i 'public' -i 'src/client' ./src/server/index.js",
-    "test": "NODE_ENV=test nodemon --exec 'mocha --recursive -R spec'",
-    "postinstall": "npm run build"
-  },
-  "author": "Vincent Ho",
-  "license": "ISC",
-  "devDependencies": {
-    "chai": "4.1.2",
-    "mocha": "4.0.1",
-    "webpack-middleware": "1.5.1"
+    "start": "npm run build && node build/main.js",
+    "client": "vue-cli-service serve src/client/main.ts",
+    "server": "ts-node-dev --no-notify ./src/server/main.ts",
+    "build": "npm run clean && npm run build-client && npm run build-server",
+    "build-client": "vue-cli-service build src/client/main.ts",
+    "build-server": "tsc --build tsconfig.server.json",
+    "clean": "rm -rf build",
+    "test": "mocha"
   },
   "dependencies": {
-    "babel-core": "6.26.0",
-    "babel-loader": "7.1.2",
-    "babel-preset-es2015": "6.24.1",
-    "babel-preset-es2015-node6": "0.4.0",
-    "babel-preset-stage-2": "6.24.1",
-    "express": "4.16.1",
-    "nodemon": "1.12.1",
-    "socket.io": "2.0.3",
-    "webpack": "3.6.0"
-  }
+    "@koa/cors": "^3.1.0",
+    "@types/koa": "^2.11.3",
+    "@types/koa-router": "^7.4.1",
+    "@types/koa-sslify": "^4.0.1",
+    "@types/socket.io": "^2.1.8",
+    "@vue/cli-plugin-typescript": "~4.4.0",
+    "@vue/cli-service": "^4.4.6",
+    "@vuejs-community/vue-filter-date-format": "^1.3.2",
+    "koa": "^2.13.0",
+    "koa-router": "^9.1.0",
+    "koa-send": "^5.0.0",
+    "koa-sendfile": "^2.0.1",
+    "koa-sslify": "^4.0.3",
+    "nes.css": "^2.3.0",
+    "socket.io": "^2.3.0",
+    "socket.io-client": "^2.3.0",
+    "typescript": "^3.9.6",
+    "vue": "^2.6.11",
+    "vue-class-component": "^7.2.3",
+    "vue-property-decorator": "^8.4.2",
+    "vue-socket.io-extended": "^4.0.3",
+    "vue-template-compiler": "^2.6.11",
+    "vuex": "^3.5.1"
+  },
+  "devDependencies": {
+    "prettier": "^2.0.5",
+    "ts-node-dev": "^1.0.0-pre.50"
+  },
+  "license": "ISC"
 }

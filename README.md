@@ -1,19 +1,20 @@
-# Tetris
-> Multiplayer Tetris game build using [Node.js](https://github.com/nodejs/node), [Socket.IO](https://github.com/socketio/socket.io), and [Phaser](https://github.com/photonstorm/phaser)
+# Tetris Battle
 
-## Setup
-Install dependencies
+## Project setup
 ```
-$ npm i
+npm install
 ```
 
-## Quick Start
-Start server in dev mode on port 8000
-```bash
-$ npm run dev
+### Compiles and hot-reloads for development
+```
+npm run client
+npm run server
 ```
 
-Run unit tests
+### Compiles and minifies for production
 ```
-$ npm test
+npm run build
 ```
+
+### Customize configuration
+See [Configuration Reference](https://cli.vuejs.org/config/).
