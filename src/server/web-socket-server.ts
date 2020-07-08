@@ -30,10 +30,6 @@ export class WebSocketServer {
     });
 
     socket.on('REGISTER', (username: string) => {
-      // No username
-      if (!username) {
-        username = 'Anonymous';
-      }
       obj['username'] = username;
       this.addUser(obj);
       socket.join('chatroom');
@@ -251,6 +247,25 @@ export class WebSocketServer {
   }
 
   static addUser(obj: any, broadcast = true) {
+    // No username
+    if (!obj.username) {
+      obj.username = 'Anonymous';
+    }
+    // Avoid conflict usernames
+    let checkName = obj.username;
+    let tries = 1;
+    let maxTries = 10;
+    const usersArray = Object.values(this.users);
+    while (tries <= maxTries && usersArray.find((u) => u.username === checkName)) {
+      obj.username = `${checkName}${tries + 1}`;
+      checkName = obj.username;
+      tries += 1;
+    }
+
+    if (tries > maxTries) {
+      obj.username = 'PLEASE SET NAME';
+    }
+
     if (broadcast) {
       this.io.emit('CHAT_MESSAGE', {
         username: 'SYSTEM',
