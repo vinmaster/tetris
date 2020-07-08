@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "rootDir": "src/server",
+    "rootDir": "src",
     "outDir": "build",
     "target": "es5",
     "module": "commonjs",
@@ -31,12 +31,12 @@
   },
   "include": [
     "src/server/**/*.ts",
-    "src/**/*.tsx",
-    "src/**/*.vue",
+    "src/common/**/*.ts",
     "tests/**/*.ts",
     "tests/**/*.tsx"
   ],
   "exclude": [
+    "src/client",
     "node_modules"
   ]
 }

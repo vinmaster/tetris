@@ -16,11 +16,6 @@ const server = http.createServer(app.callback());
 const io = socketio(server);
 WebSocketServer.setup(io);
 
-const {
-  default: sslify, // middleware factory
-  xForwardedProtoResolver: resolver, // resolver needed
-} = require('koa-sslify');
-app.use(sslify({ resolver }));
 if (process.env.NODE_ENV === 'production') {
   const {
     default: sslify, // middleware factory

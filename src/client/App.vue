@@ -28,13 +28,19 @@ import Chat from './components/Chat.vue';
     LOGS(data) {
       console.log('LOGS', data);
     },
+    FORCE_REFRESH() {
+      window.location.reload(true);
+    },
   },
 })
 export default class App extends Vue {}
 </script>
 
 <style>
-@import url('https://fonts.googleapis.com/css?family=Press+Start+2P');
+@font-face {
+  font-family: '04b03';
+  src: url('/04B_03__.TTF') format('truetype');
+}
 
 html,
 body {
@@ -49,7 +55,7 @@ pre,
 code,
 kbd,
 samp {
-  font-family: 'Press Start 2P';
+  font-family: '04b03';
 }
 
 #app {
@@ -86,7 +92,13 @@ samp {
 }
 
 .chat {
-  max-width: 500px;
+  width: 500px;
+}
+
+@media only screen and (max-width: 500px)  {
+  .chat {
+    display: none;
+  }
 }
 
 [v-cloak] {
