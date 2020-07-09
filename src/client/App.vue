@@ -1,16 +1,15 @@
 <template>
   <div id="app">
     <div class="content">WORK IN PROGRESS</div>
-    <transition name="slide-fade">
-      <button class="toggle" type="button" @click="toggleChat()" v-if="!chatOpen">
-        <svg viewBox="0 0 100 80" width="40" height="40">
-          <rect width="100" height="15"></rect>
-          <rect y="25" width="100" height="15"></rect>
-          <rect y="50" width="100" height="15"></rect>
-        </svg>
-      </button>
-
-      <div class="chat" v-if="chatOpen">
+    <button class="toggle-btn" type="button" @click="toggleChat()" v-show="!chatOpen">
+      <svg viewBox="0 0 100 80" width="40" height="40">
+        <rect width="100" height="15"></rect>
+        <rect y="25" width="100" height="15"></rect>
+        <rect y="50" width="100" height="15"></rect>
+      </svg>
+    </button>
+    <transition name="slide">
+      <div class="chat" v-show="chatOpen">
         <chat @toggle="toggleChat"></chat>
       </div>
     </transition>
@@ -77,6 +76,7 @@ samp {
 #app {
   height: 100%;
   display: flex;
+  background-color: black;
 }
 
 .content {
@@ -121,15 +121,20 @@ samp {
   display: none;
 }
 
-.slide-fade-enter-active {
+.toggle-btn {
+  position: absolute;
+  right: 0;
+}
+
+.slide-enter-active {
   transition: all 0.3s ease;
 }
-.slide-fade-leave-active {
-  transition: all 0.8s cubic-bezier(1, 0.5, 0.8, 1);
+.slide-leave-active {
+  transition: all 0.3s ease;
+  /* transition: all 0.3s cubic-bezier(1, 0.5, 0.8, 1); */
 }
-.slide-fade-enter, .slide-fade-leave-to
-/* .slide-fade-leave-active below version 2.1.8 */ {
+.slide-enter,
+.slide-leave-to {
   transform: translateX(500px);
-  opacity: 0;
 }
 </style>
