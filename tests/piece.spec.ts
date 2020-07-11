@@ -16,7 +16,7 @@ describe('Piece', () => {
     expect(piece.type).exist;
   });
 
-  it('should rotate', () => {
+  it('should rotate clockwise', () => {
     // piece.row += 5;
     // piece.col 3;
     piece.rotateOnBoard(90, board);
@@ -31,6 +31,20 @@ describe('Piece', () => {
     board.addPiece(piece);
     // console.log(piece.toString());
     // console.log(board.toString());
+  });
+
+  it.only('should rotate counterclockwise', () => {
+    piece = new Piece('I');
+    piece.row += 2;
+    piece.rotateOnBoard(-90, board);
+    expect(piece.posIndex).eq(3);
+    piece.rotateOnBoard(-90, board);
+    expect(piece.posIndex).eq(2);
+    piece.rotateOnBoard(-90, board);
+    expect(piece.posIndex).eq(1);
+    piece.rotateOnBoard(-90, board);
+    expect(piece.posIndex).eq(0);
+    // board.addPiece(piece);
   });
 
   it('should shift down', () => {

@@ -171,15 +171,15 @@ export class Piece {
 
   getRotatedData(direction: 90 | -90) {
     const posDir = direction === 90 ? 1 : -1;
-    return this.positions[Utility.modulo(this.posIndex + posDir, 4)];
+    return this.positions[Utility.modulo(this.position + posDir, 4)];
   }
 
   rotateOnBoard(direction: 90 | -90, board: Board) {
     let isRotated = false;
     const rotated = this.getRotatedData(direction);
     const posDir = direction === 90 ? 1 : -1;
-    const curPos = Utility.modulo(this.posIndex, 4);
-    const newPos = Utility.modulo(this.posIndex + posDir, 4);
+    const curPos = Utility.modulo(this.position, 4);
+    const newPos = Utility.modulo(this.position + posDir, 4);
 
     for (let i = 0, len = this.kickData[0].length; i < len; i++) {
       const [cx, cy] = this.kickData[curPos][i];

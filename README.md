@@ -31,6 +31,5 @@ npm test
 ### TODO
 - send cleared lines
 - tick between server and client
-- counterclockwise rotate
 - skins flat, classic, modern
 - ghost blocks
