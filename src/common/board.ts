@@ -40,6 +40,7 @@ export class Board {
     return grid;
   }
 
+  // Helper function to create a grid from visual representation of a grid
   getGridFromString(str: string) {
     const lines = str.split('\n');
     let grid: string[][] = [];
@@ -64,32 +65,6 @@ export class Board {
       // }
     }
     return grid;
-  }
-
-  spawnNewPieceForPlayer(player: string) {
-    const nextPieceType = this.nextPieceTypes.shift();
-    if (!nextPieceType) return false;
-
-    const piece = new Piece(nextPieceType);
-    this.current.push({ piece, player });
-
-    const pieceHeight = piece.data.length;
-    const pieceWidth = piece.data[0].length;
-    for (let row = 0; row < pieceHeight; row++) {
-      const gridColOffset = Math.floor(this.width / 2 - Math.floor(pieceWidth / 2));
-      for (let col = 0; col < pieceWidth; col++) {
-        // Piece data has nothing here
-        if (piece.data[row][col].length === 0) continue;
-
-        const newCol = col + gridColOffset;
-        if (this.grid[row][newCol].length === 0 || this.canPlaceAt(row, newCol, player)) {
-          this.addPieceAt(row, newCol, { type: piece.type, player });
-        } else {
-          return false;
-        }
-      }
-    }
-    return true;
   }
 
   addPiece(piece: Piece) {
@@ -143,42 +118,5 @@ export class Board {
     return (
       this.grid.map((line) => line.map((c) => (c.length ? c : ' ')).join('')).join('|\n') + '|'
     );
-  }
-
-  // Check if this position has current pieces
-  canPlaceAt(row, col, player): boolean {
-    if (!player) return false;
-    if (this.grid[row][col] === '') return false;
-
-    const cell = this.decodeCell(this.grid[row][col]);
-
-    // TODO: check performance
-    return cell.some((c) => c.player !== player);
-  }
-
-  addPieceAt(row, col, { type, player }: { type: string; player?: string }) {
-    if (this.grid[row][col].length !== 0) {
-      this.grid[row][col] += '|';
-    }
-    this.grid[row][col] += this.encodeCell([{ type, player }]);
-  }
-
-  decodeCell(s: string): Cell {
-    const entries = s.split('|');
-    const result: Cell = [];
-    for (const e of entries) {
-      const [type, player] = e.split(',');
-      result.push({ type, player });
-    }
-    return result;
-  }
-
-  encodeCell(cell: Cell): string {
-    return cell
-      .map((entry) => {
-        if (entry.player) return `${entry.type},${entry.player}`;
-        else return entry.type;
-      })
-      .join('|');
   }
 }

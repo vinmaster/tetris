@@ -33,7 +33,7 @@ describe('Piece', () => {
     // console.log(board.toString());
   });
 
-  it.only('should rotate counterclockwise', () => {
+  it('should rotate counterclockwise', () => {
     piece = new Piece('I');
     piece.row += 2;
     piece.rotateOnBoard(-90, board);

@@ -11,69 +11,6 @@ https://www.youtube.com/watch?v=yIpk5TJ_uaI
 https://www.youtube.com/watch?v=Atlr5vvdchY
 */
 
-// Kick data y is inverse because row 0 is at top
-const KICK_DATA = [
-  [
-    [0, 0],
-    [-1, 0],
-    [-1, -1],
-    [0, 2],
-    [-1, 2],
-  ],
-  [
-    [0, 0],
-    [1, 0],
-    [1, 1],
-    [0, -2],
-    [1, -2],
-  ],
-  [
-    [0, 0],
-    [1, 0],
-    [1, -1],
-    [0, 2],
-    [1, 2],
-  ],
-  [
-    [0, 0],
-    [-1, 0],
-    [-1, 1],
-    [0, -2],
-    [-1, -2],
-  ],
-];
-const KICK_DATA_I = [
-  [
-    [0, 0],
-    [-2, 0],
-    [1, 0],
-    [-2, 1],
-    [1, -2],
-  ],
-  [
-    [-1, 0],
-    [0, 0],
-    [0, 0],
-    [0, -1],
-    [0, 2],
-  ],
-  [
-    [-1, -1],
-    [1, -1],
-    [-2, -1],
-    [1, 0],
-    [-2, 0],
-  ],
-  [
-    [0, -1],
-    [0, -1],
-    [0, -1],
-    [0, 1],
-    [0, -2],
-  ],
-];
-const KICK_DATA_O = [[[0, 0]], [[0, 0]], [[0, 0]], [[0, 0]]];
-
 export class Piece {
   type: string;
   data: string[][];
@@ -99,37 +36,37 @@ export class Piece {
     switch (type) {
       case 'I':
         this.positions = CONSTANTS.POSITIONS_I;
-        this.kickData = KICK_DATA_I;
+        this.kickData = CONSTANTS.KICK_DATA_I;
         [this.col, this.row] = [2, -1];
         break;
       case 'J':
         this.positions = CONSTANTS.POSITIONS_J;
-        this.kickData = KICK_DATA;
+        this.kickData = CONSTANTS.KICK_DATA;
         [this.col, this.row] = [3, 0];
         break;
       case 'L':
         this.positions = CONSTANTS.POSITIONS_L;
-        this.kickData = KICK_DATA;
+        this.kickData = CONSTANTS.KICK_DATA;
         [this.col, this.row] = [3, 0];
         break;
       case 'O':
         this.positions = CONSTANTS.POSITIONS_O;
-        this.kickData = KICK_DATA_O;
+        this.kickData = CONSTANTS.KICK_DATA_O;
         [this.col, this.row] = [4, 0];
         break;
       case 'S':
         this.positions = CONSTANTS.POSITIONS_S;
-        this.kickData = KICK_DATA;
+        this.kickData = CONSTANTS.KICK_DATA;
         [this.col, this.row] = [3, 0];
         break;
       case 'T':
         this.positions = CONSTANTS.POSITIONS_T;
-        this.kickData = KICK_DATA;
+        this.kickData = CONSTANTS.KICK_DATA;
         [this.col, this.row] = [3, 0];
         break;
       case 'Z':
         this.positions = CONSTANTS.POSITIONS_Z;
-        this.kickData = KICK_DATA;
+        this.kickData = CONSTANTS.KICK_DATA;
         [this.col, this.row] = [3, 0];
         break;
       default:
@@ -178,11 +115,10 @@ export class Piece {
     let isRotated = false;
     const rotated = this.getRotatedData(direction);
     const posDir = direction === 90 ? 1 : -1;
-    const curPos = Utility.modulo(this.position, 4);
     const newPos = Utility.modulo(this.position + posDir, 4);
 
     for (let i = 0, len = this.kickData[0].length; i < len; i++) {
-      const [cx, cy] = this.kickData[curPos][i];
+      const [cx, cy] = this.kickData[this.position][i];
       if (this.isValidMoveOnBoard(this.col + cx, Math.floor(this.row + cy), rotated, board)) {
         this.col += cx;
         this.row += cy;
