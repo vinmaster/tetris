@@ -172,6 +172,28 @@ export class Piece {
     }
   }
 
+  shiftDownOnBoard(board: Board) {
+    if (this.isValidMoveOnBoard(0, 1, this.data, board)) {
+      // TODO: add gravity
+      // const gravity = gravityArray[level];
+      // this.y += gravity;
+      this.row += 1;
+    }
+  }
+
+  hardDropOnBoard(board: Board) {
+    this.row += this.getDropDistanceOnBoard(20, board);
+  }
+
+  // Find maximum distance allowed
+  getDropDistanceOnBoard(distance: number, board: Board) {
+    let i;
+    for (i = 1; i <= distance; i++) {
+      if (!this.isValidMoveOnBoard(0, i, this.data, board)) return i - 1;
+    }
+    return i - 1;
+  }
+
   getRotatedData(direction: 90 | -90) {
     let rotated: string[][] = [];
     if (direction === 90) {

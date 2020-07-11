@@ -33,6 +33,24 @@ describe.only('Piece', () => {
     // console.log(board.toString());
   });
 
+  it('should shift down', () => {
+    piece = new Piece('O');
+    const row = piece.row;
+    piece.shiftDownOnBoard(board);
+    board.addPiece(piece);
+    // console.log(board.toString());
+    expect(piece.row).eq(row + 1);
+  });
+
+  it('should hard drop down', () => {
+    piece = new Piece('O');
+    const row = piece.row;
+    piece.hardDropOnBoard(board);
+    board.addPiece(piece);
+    // console.log(board.toString());
+    expect(piece.row).eq(20);
+  });
+
   describe('L kick tests', () => {
     beforeEach(() => {
       board = new Board();
