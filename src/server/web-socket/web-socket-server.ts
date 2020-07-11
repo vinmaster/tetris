@@ -1,14 +1,16 @@
-import { Utility } from '../common/utility';
+import { Utility } from '../../common/utility';
+import { CONSTANTS } from '../../common/constants';
 
 interface User {
   id: string;
+  userId: string;
   username: string;
   usernameColor: string;
 }
 
 export class WebSocketServer {
   static io: SocketIO.Server;
-  static users: { [id: string]: User } = {};
+  static users: { [id: string]: User | undefined } = {};
 
   static setup(io: SocketIO.Server) {
     this.io = io;
@@ -25,19 +27,17 @@ export class WebSocketServer {
       this.broadcastUsers(socket);
     });
 
-    socket.on('LIST_USERS', () => {
+    socket.on(CONSTANTS.SOCKET.LIST_USERS, () => {
       this.broadcastUsers(socket);
     });
 
-    socket.on('REGISTER', (username: string) => {
+    socket.on(CONSTANTS.SOCKET.REGISTER, (username: string) => {
       obj['username'] = username;
       this.addUser(obj);
       socket.join('chatroom');
-
-      // console.log('users', this.users);
     });
 
-    socket.on('CHAT_MESSAGE', (message: string) => {
+    socket.on(CONSTANTS.CHAT.MESSAGE, (message: string) => {
       if (!message) return;
 
       this.processMessage(socket, message);
@@ -47,13 +47,18 @@ export class WebSocketServer {
   static processMessage(socket: SocketIO.Socket, message: string): any {
     let input: any = message.trim();
     let isCommand = true;
-    let username = this.getUser(socket.id).username;
+    const user = this.getUser(socket.id);
+    if (!user) {
+      this.sendError(socket, 'User not found');
+      return;
+    }
+    let username = user.username;
 
     // Check if it is a command
     if (input.length <= 1 || input[0] !== '/') isCommand = false;
 
     if (!isCommand) {
-      this.io.to('chatroom').emit('CHAT_MESSAGE', {
+      this.io.to('chatroom').emit(CONSTANTS.CHAT.MESSAGE, {
         username,
         text: input,
         timestamp: +new Date(),
@@ -62,7 +67,7 @@ export class WebSocketServer {
     }
 
     // Handle commands
-    const argStr = input.substring(1, input.length).toLowerCase();
+    const argStr: string = input.substring(1, input.length).toLowerCase();
     const args = argStr.split(' ').filter((a) => a.length !== 0);
     const command = args[0];
     const timestamp = +new Date();
@@ -71,7 +76,7 @@ export class WebSocketServer {
     switch (command) {
       case 'time':
         output = new Date().toString();
-        this.io.to(socket.id).emit('CHAT_MESSAGE', {
+        this.io.to(socket.id).emit(CONSTANTS.CHAT.MESSAGE, {
           username: 'SYSTEM',
           text: output,
           timestamp,
@@ -82,7 +87,7 @@ export class WebSocketServer {
           socket.join('admins');
           output = 'You are now admin';
 
-          this.io.to(socket.id).emit('CHAT_MESSAGE', {
+          this.io.to(socket.id).emit(CONSTANTS.CHAT.MESSAGE, {
             username: 'SYSTEM',
             text: output,
             timestamp,
@@ -91,12 +96,12 @@ export class WebSocketServer {
         } else {
           socket.join('chatroom');
           output = `${username} has joined the chatroom`;
-          this.io.to('chatroom').emit('CHAT_MESSAGE', {
+          this.io.to('chatroom').emit(CONSTANTS.CHAT.MESSAGE, {
             username: 'SYSTEM',
             text: output,
             timestamp,
           });
-          this.io.to(socket.id).emit('CHAT_MESSAGE', {
+          this.io.to(socket.id).emit(CONSTANTS.CHAT.MESSAGE, {
             username: 'SYSTEM',
             text: 'You have joined the chatroom',
             timestamp,
@@ -108,20 +113,21 @@ export class WebSocketServer {
           socket.leave('admins');
           output = 'You are now not admin';
 
-          this.io.to(socket.id).emit('CHAT_MESSAGE', {
+          this.io.to(socket.id).emit(CONSTANTS.CHAT.MESSAGE, {
             username: 'SYSTEM',
             text: output,
             timestamp,
           });
+          this.broadcastUsers(socket);
         } else {
           socket.leave('chatroom');
           output = `${username} has left the chatroom`;
-          this.io.to('chatroom').emit('CHAT_MESSAGE', {
+          this.io.to('chatroom').emit(CONSTANTS.CHAT.MESSAGE, {
             username: 'SYSTEM',
             text: output,
             timestamp,
           });
-          this.io.to(socket.id).emit('CHAT_MESSAGE', {
+          this.io.to(socket.id).emit(CONSTANTS.CHAT.MESSAGE, {
             username: 'SYSTEM',
             text: 'You have left the chatroom',
             timestamp,
@@ -134,30 +140,60 @@ export class WebSocketServer {
         } else {
           output = Object.assign(
             {},
-            Object.keys(this.users).map((id) => this.getUser(id).username)
+            Object.values(this.users)
+              .map((user) => (user ? user.username : null))
+              .filter((u) => u)
           );
         }
 
-        this.io.to(socket.id).emit('CHAT_MESSAGE', {
+        this.io.to(socket.id).emit(CONSTANTS.CHAT.MESSAGE, {
           username: 'SYSTEM',
           text: output,
           timestamp,
         });
         break;
-      case 'setcolor':
-        if (args[1].length > 0) {
-          this.users[socket.id].usernameColor = args[1];
+      case 'setusername': {
+        const username = args.slice(1).join(' ');
+        const user = this.getUser(socket.id);
+        if (!user) {
+          this.sendError(socket, 'User not found');
+          return;
+        }
+        user.username = username;
+        this.validateUsername(user);
+        output = `Your username: ${user.username}`;
+        this.io.to(socket.id).emit(CONSTANTS.CHAT.MESSAGE, {
+          username: 'SYSTEM',
+          text: output,
+          timestamp,
+        });
+        this.broadcastUsers(socket);
+        break;
+      }
+      case 'color':
+        output = `Your username color: ${user.usernameColor}`;
+        this.io.to(socket.id).emit(CONSTANTS.CHAT.MESSAGE, {
+          username: 'SYSTEM',
+          text: output,
+          timestamp,
+        });
+        break;
+      case 'setcolor': {
+        const color = args.slice(1).join(' ');
+        if (color.length > 0) {
+          user.usernameColor = color;
           this.broadcastUsers(socket);
-          output = 'Your username color has changed';
+          output = `Your username color: ${color}`;
         } else {
           output = 'Invalid color';
         }
-        this.io.to(socket.id).emit('CHAT_MESSAGE', {
+        this.io.to(socket.id).emit(CONSTANTS.CHAT.MESSAGE, {
           username: 'SYSTEM',
           text: output,
           timestamp,
         });
         break;
+      }
       case 'role':
         if (this.isAdmin(socket.id)) {
           output = 'Admin';
@@ -165,7 +201,7 @@ export class WebSocketServer {
           output = 'User';
         }
 
-        this.io.to(socket.id).emit('CHAT_MESSAGE', {
+        this.io.to(socket.id).emit(CONSTANTS.CHAT.MESSAGE, {
           username: 'SYSTEM',
           text: output,
           timestamp,
@@ -174,18 +210,33 @@ export class WebSocketServer {
       case 'forcerefresh':
         if (this.isAdmin(socket.id)) {
           this.io.emit('FORCE_REFRESH');
+          output = 'Refreshing';
+        } else {
+          output = 'Invalid command';
+          this.io.to(socket.id).emit(CONSTANTS.CHAT.MESSAGE, {
+            username: 'SYSTEM',
+            text: output,
+            timestamp,
+          });
         }
-        output = 'Refreshing';
         break;
       case 'help':
         output = `
 /time - Get time
 /users - List the connected users
+/setusername - Set new username
+/color - Get username color
 /setcolor - Set username color
+/role - Check role
 /join - Join chatroom
 /leave - Leave chatroom
 /help - List commands`;
-        this.io.to(socket.id).emit('CHAT_MESSAGE', {
+        if (this.isAdmin(socket.id)) {
+          output += `
+/forcerefresh - Force refresh all client browsers
+`;
+        }
+        this.io.to(socket.id).emit(CONSTANTS.CHAT.MESSAGE, {
           username: 'SYSTEM',
           text: output,
           timestamp,
@@ -193,7 +244,7 @@ export class WebSocketServer {
         break;
       default:
         output = 'Invalid command';
-        this.io.to(socket.id).emit('CHAT_MESSAGE', {
+        this.io.to(socket.id).emit(CONSTANTS.CHAT.MESSAGE, {
           username: 'SYSTEM',
           text: output,
           timestamp,
@@ -203,7 +254,7 @@ export class WebSocketServer {
 
     const log = {
       issuerId: socket.id,
-      issuer: this.getUser(socket.id).username,
+      issuer: user.username,
       input,
       text: output,
       timestamp,
@@ -222,9 +273,10 @@ export class WebSocketServer {
     if (this.isAdmin(socket.id)) {
       output = Object.values(this.users);
     } else {
-      output = Object.values(this.users).map((u) =>
-        Utility.getObjectSlice(u, ['username', 'usernameColor'])
-      );
+      output = Object.values(this.users).map((u) => {
+        if (!u) return {};
+        else return Utility.getObjectSlice(u, ['username', 'usernameColor']);
+      });
     }
 
     this.io.emit('LIST_USERS', output);
@@ -246,28 +298,42 @@ export class WebSocketServer {
     return this.users[id];
   }
 
-  static addUser(obj: any, broadcast = true) {
-    // No username
-    if (!obj.username) {
-      obj.username = 'Anonymous';
+  static validateUsername(user: User) {
+    // No username or length 0
+    if (!user.username) {
+      user.username = 'Player';
     }
+
     // Avoid conflict usernames
-    let checkName = obj.username;
+    let originalName = user.username;
+    let checkName = user.username;
     let tries = 1;
-    let maxTries = 10;
+    let maxTries = tries + 10;
     const usersArray = Object.values(this.users);
-    while (tries <= maxTries && usersArray.find((u) => u.username === checkName)) {
-      obj.username = `${checkName}${tries + 1}`;
-      checkName = obj.username;
+    while (tries < maxTries && usersArray.find((u) => u && u.username === checkName)) {
+      checkName = `${originalName}${tries + 1}`;
       tries += 1;
     }
+    user.username = checkName;
 
     if (tries > maxTries) {
-      obj.username = 'PLEASE SET NAME';
+      user.username = 'PLEASE SET NAME';
     }
+  }
+
+  static sendError(socket: SocketIO.Socket, error) {
+    this.io.to(socket.id).emit(CONSTANTS.CHAT.MESSAGE, {
+      username: 'SYSTEM',
+      text: error,
+      timestamp: +new Date(),
+    });
+  }
+
+  static addUser(obj: any, broadcast = true) {
+    this.validateUsername(obj);
 
     if (broadcast) {
-      this.io.emit('CHAT_MESSAGE', {
+      this.io.emit(CONSTANTS.CHAT.MESSAGE, {
         username: 'SYSTEM',
         text: `${obj.username} has connected`,
         timestamp: +new Date(),
@@ -276,23 +342,27 @@ export class WebSocketServer {
 
     const usernameColor = Utility.getRandomColor();
 
-    this.users[obj.id.toString()] = {
+    this.users[obj.id] = {
       id: obj.id,
+      userId: Utility.createUUID(),
       username: obj.username,
       usernameColor,
     };
   }
 
   static removeUser(id: string, broadcast = true) {
-    if (broadcast && this.getUser(id)) {
-      this.io.emit('CHAT_MESSAGE', {
+    const user = this.getUser(id);
+    if (broadcast && user) {
+      this.io.emit(CONSTANTS.CHAT.MESSAGE, {
         username: 'SYSTEM',
-        text: `${this.getUser(id).username} has disconnected`,
+        text: `${user.username} has disconnected`,
         timestamp: +new Date(),
       });
     }
 
+    // Deletes the object
     delete this.users[id];
+    // this.users[id] = undefined;
   }
 
   static isInRoom(roomName: string, id: string) {

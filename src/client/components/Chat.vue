@@ -120,7 +120,7 @@ export default class Chat extends Vue {
   }
 
   setup() {
-    var dialog = document.querySelector('dialog');
+    let dialog = document.querySelector('dialog');
     dialogPolyfill.registerDialog(dialog);
 
     this.$socket.client.emit('LIST_USERS');
@@ -156,7 +156,7 @@ export default class Chat extends Vue {
 
   onNewMessage(data: any) {
     data.timestamp = new Date(data.timestamp);
-    const color = this.connectedUsers.find((u) => u.username === data.username)?.usernameColor;
+    const color = this.connectedUsers.find((u) => u && u.username === data.username)?.usernameColor;
     data.usernameColor = color || 'white';
     this.messages.push(data);
 

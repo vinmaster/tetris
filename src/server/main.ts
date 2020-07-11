@@ -5,7 +5,7 @@ import send from 'koa-send';
 import cors from '@koa/cors';
 import http from 'http';
 import socketio from 'socket.io';
-import { WebSocketServer } from './web-socket-server';
+import { WebSocketServer } from './web-socket/web-socket-server';
 
 const app = new Koa();
 const router = new Router();

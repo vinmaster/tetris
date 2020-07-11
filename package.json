@@ -18,7 +18,7 @@
     "clean": "rm -rf build",
     "build-client": "vue-cli-service build src/client/main.ts",
     "build-server": "tsc --build tsconfig.server.json",
-    "test": "exit 1"
+    "test": "mocha -r ts-node/register 'tests/**/*.ts'"
   },
   "dependencies": {
     "@koa/cors": "^3.1.0",
@@ -47,8 +47,13 @@
     "vuex": "^3.5.1"
   },
   "devDependencies": {
+    "@types/chai": "^4.2.11",
+    "@types/mocha": "^7.0.2",
+    "chai": "^4.2.0",
     "concurrently": "^5.2.0",
+    "mocha": "^8.0.1",
     "prettier": "^2.0.5",
+    "ts-node": "^8.10.2",
     "ts-node-dev": "^1.0.0-pre.50"
   },
   "license": "ISC"

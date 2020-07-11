@@ -7,14 +7,31 @@ npm install
 
 ### Compiles and hot-reloads for development
 ```
-npm run client
-npm run server
+npm run dev-client
+npm run dev-server
 ```
 
-### Compiles and minifies for production
+### Compiles and minifies for production and run
 ```
-npm run build
+npm start
 ```
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+### Run tests
+```
+npm test
+```
+
+### Credit to
+- https://tetris.fandom.com/wiki/Tetris_Guideline
+- https://harddrop.com/wiki/SRS
+- https://imgur.com/a/bGwLQsi
+- https://github.com/simonlc/tetr.js
+- https://github.com/nullobject/tetris
+
+### TODO
+- shift down
+- send cleared lines
+- tick between server and client
+- counterclockwise rotate
+- skins flat, classic, modern
+- ghost blocks
