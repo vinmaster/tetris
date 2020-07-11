@@ -3,7 +3,7 @@ import 'mocha';
 import { Board } from '../src/common/board';
 import { Piece } from '../src/common/piece';
 
-describe.only('Piece', () => {
+describe('Piece', () => {
   let board: Board;
   let piece: Piece;
 
@@ -20,13 +20,13 @@ describe.only('Piece', () => {
     // piece.row += 5;
     // piece.col 3;
     piece.rotateOnBoard(90, board);
-    expect(piece.pos).eq(1);
+    expect(piece.posIndex).eq(1);
     piece.rotateOnBoard(90, board);
-    expect(piece.pos).eq(2);
+    expect(piece.posIndex).eq(2);
     piece.rotateOnBoard(90, board);
-    expect(piece.pos).eq(3);
+    expect(piece.posIndex).eq(3);
     piece.rotateOnBoard(90, board);
-    expect(piece.pos).eq(0);
+    expect(piece.posIndex).eq(0);
     // console.log(piece.toString());
     board.addPiece(piece);
     // console.log(piece.toString());
@@ -127,7 +127,7 @@ describe.only('Piece', () => {
 
     it('position 3 case 2 & position 0 case 4', () => {
       [piece.row, piece.col] = [0, 2];
-      piece.setPos(3);
+      piece.position = 3;
       board.grid = board.getGridFromString(
         ` .  .     
 ..  .     

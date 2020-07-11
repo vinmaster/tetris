@@ -1,5 +1,6 @@
 import { Utility } from './utility';
 import { Board } from './board';
+import { CONSTANTS } from './constants';
 
 /*
 Rotation docs:
@@ -76,7 +77,8 @@ const KICK_DATA_O = [[[0, 0]], [[0, 0]], [[0, 0]], [[0, 0]]];
 export class Piece {
   type: string;
   data: string[][];
-  pos: number;
+  positions: string[][][];
+  posIndex: number;
   row: number;
   col: number;
   kickData: number[][][];
@@ -84,76 +86,49 @@ export class Piece {
   constructor(type: string) {
     this.type = type;
     this.data = [];
-    this.pos = 0;
+    this.positions = [];
+    this.posIndex = 0;
     this.col = 0;
     this.row = 0;
     this.kickData = [];
     this.setProperties(type);
+    this.position = 0;
   }
 
   setProperties(type) {
     switch (type) {
       case 'I':
-        this.data = [
-          ['', '', '', ''],
-          ['0', '0', '0', '0'],
-          ['', '', '', ''],
-          ['', '', '', ''],
-        ];
+        this.positions = CONSTANTS.POSITIONS_I;
         this.kickData = KICK_DATA_I;
         [this.col, this.row] = [2, -1];
         break;
       case 'J':
-        this.data = [
-          ['0', '', ''],
-          ['0', '0', '0'],
-          ['', '', ''],
-        ];
+        this.positions = CONSTANTS.POSITIONS_J;
         this.kickData = KICK_DATA;
         [this.col, this.row] = [3, 0];
         break;
       case 'L':
-        this.data = [
-          ['', '', '0'],
-          ['0', '0', '0'],
-          ['', '', ''],
-        ];
+        this.positions = CONSTANTS.POSITIONS_L;
         this.kickData = KICK_DATA;
         [this.col, this.row] = [3, 0];
         break;
       case 'O':
-        this.data = [
-          ['0', '0'],
-          ['0', '0'],
-          ['', ''],
-        ];
+        this.positions = CONSTANTS.POSITIONS_O;
         this.kickData = KICK_DATA_O;
         [this.col, this.row] = [4, 0];
         break;
       case 'S':
-        this.data = [
-          ['', '0', '0'],
-          ['0', '0', ''],
-          ['', '', ''],
-        ];
+        this.positions = CONSTANTS.POSITIONS_S;
         this.kickData = KICK_DATA;
         [this.col, this.row] = [3, 0];
         break;
       case 'T':
-        this.data = [
-          ['', '0', ''],
-          ['0', '0', '0'],
-          ['', '', ''],
-        ];
+        this.positions = CONSTANTS.POSITIONS_T;
         this.kickData = KICK_DATA;
         [this.col, this.row] = [3, 0];
         break;
       case 'Z':
-        this.data = [
-          ['0', '0', ''],
-          ['', '0', '0'],
-          ['', '', ''],
-        ];
+        this.positions = CONSTANTS.POSITIONS_Z;
         this.kickData = KICK_DATA;
         [this.col, this.row] = [3, 0];
         break;
@@ -162,14 +137,14 @@ export class Piece {
     }
   }
 
-  setPos(newPos: number) {
-    if (this.pos === newPos) return;
-    else {
-      do {
-        this.data = this.getRotatedData(90);
-        this.pos += 1;
-      } while (this.pos !== newPos);
-    }
+  get position() {
+    return this.posIndex;
+  }
+
+  set position(newPos: number) {
+    if (this.positions.length === 0) return;
+    this.posIndex = newPos;
+    this.data = this.positions[this.posIndex];
   }
 
   shiftDownOnBoard(board: Board) {
@@ -195,39 +170,23 @@ export class Piece {
   }
 
   getRotatedData(direction: 90 | -90) {
-    let rotated: string[][] = [];
-    if (direction === 90) {
-      for (let i = this.data.length - 1; i >= 0; i--) {
-        rotated[i] = [];
-        for (let row = 0; row < this.data.length; row++) {
-          rotated[i][this.data.length - 1 - row] = this.data[row][i];
-        }
-      }
-    } else {
-      for (let i = 0; i < this.data.length; i++) {
-        rotated[i] = [];
-        for (let row = this.data.length - 1; row >= 0; row--) {
-          rotated[i][row] = this.data[row][this.data.length - 1 - i];
-        }
-      }
-    }
-    return rotated;
+    const posDir = direction === 90 ? 1 : -1;
+    return this.positions[Utility.modulo(this.posIndex + posDir, 4)];
   }
 
   rotateOnBoard(direction: 90 | -90, board: Board) {
     let isRotated = false;
     const rotated = this.getRotatedData(direction);
     const posDir = direction === 90 ? 1 : -1;
-    const curPos = Utility.modulo(this.pos, 4);
-    const newPos = Utility.modulo(this.pos + posDir, 4);
+    const curPos = Utility.modulo(this.posIndex, 4);
+    const newPos = Utility.modulo(this.posIndex + posDir, 4);
 
     for (let i = 0, len = this.kickData[0].length; i < len; i++) {
       const [cx, cy] = this.kickData[curPos][i];
       if (this.isValidMoveOnBoard(this.col + cx, Math.floor(this.row + cy), rotated, board)) {
         this.col += cx;
         this.row += cy;
-        this.data = rotated;
-        this.pos = newPos;
+        this.position = newPos;
         isRotated = true;
         break;
       }
@@ -264,127 +223,6 @@ export class Piece {
 
   static getPieceTypes() {
     return ['I', 'J', 'L', 'O', 'S', 'T', 'Z'];
-    //   new Piece('I'),
-    //   new Piece('J'),
-    //   new Piece('L'),
-    //   new Piece('O'),
-    //   new Piece('S'),
-    //   new Piece('T'),
-    //   new Piece('Z'),
-    // ];
-  }
-
-  static get TYPES() {
-    return {
-      blank: {
-        name: 'blank',
-        primaryColor: 0x323232,
-        lighterColor: 0x373737,
-        darkerColor: 0x2d2d2d,
-        data: [],
-        pos: [],
-        center: { row: 0, col: 0 },
-        size: 0,
-      },
-      j: {
-        name: 'j',
-        primaryColor: 0x06a5df,
-        lighterColor: 0x05defd,
-        darkerColor: 0x1e75ba,
-        data: [
-          ['j', ' ', ' '],
-          ['j', 'j', 'j'],
-          [' ', ' ', ' '],
-        ],
-        pos: [],
-        center: { row: 0, col: 0 },
-        size: 3,
-      },
-      l: {
-        name: 'l',
-        primaryColor: 0xff2536,
-        lighterColor: 0xff9295,
-        darkerColor: 0xbc1e2c,
-        data: [
-          [' ', ' ', 'l'],
-          ['l', 'l', 'l'],
-          [' ', ' ', ' '],
-        ],
-        pos: [],
-        center: {},
-        size: 3,
-      },
-      z: {
-        name: 'z',
-        primaryColor: 0x52d517,
-        lighterColor: 0x9cfe1f,
-        darkerColor: 0x37a04b,
-        data: [
-          [' ', ' ', ' '],
-          ['z', 'z', ' '],
-          [' ', 'z', 'z'],
-        ],
-        pos: [],
-        center: { row: 0, col: 0 },
-        size: 3,
-      },
-      s: {
-        name: 's',
-        primaryColor: 0x05defd,
-        lighterColor: 0x37ffff,
-        darkerColor: 0x09c8fe,
-        data: [
-          [' ', ' ', ' '],
-          [' ', 's', 's'],
-          ['s', 's', ' '],
-        ],
-        pos: [],
-        center: { row: 0, col: 0 },
-        size: 3,
-      },
-      t: {
-        name: 't',
-        primaryColor: 0xfee25a,
-        lighterColor: 0xfefe3c,
-        darkerColor: 0xfcbc12,
-        data: [
-          [' ', ' ', ' '],
-          ['t', 't', 't'],
-          [' ', 't', ' '],
-        ],
-        pos: [],
-        center: { row: 0, col: 0 },
-        size: 3,
-      },
-      o: {
-        name: 'o',
-        primaryColor: 0xc874fd,
-        lighterColor: 0xebb8fd,
-        darkerColor: 0x7f3f95,
-        data: [
-          ['o', 'o'],
-          ['o', 'o'],
-        ],
-        pos: [],
-        center: { row: 0, col: 0 },
-        size: 2,
-      },
-      i: {
-        name: 'i',
-        primaryColor: 0xf79323,
-        lighterColor: 0xf9af42,
-        darkerColor: 0xf1592a,
-        data: [
-          [' ', ' ', 'i', ' '],
-          [' ', ' ', 'i', ' '],
-          [' ', ' ', 'i', ' '],
-          [' ', ' ', 'i', ' '],
-        ],
-        pos: [],
-        center: { row: 0, col: 0 },
-        size: 4,
-      },
-    };
   }
 
   // static spawnPiece() {

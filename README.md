@@ -29,7 +29,6 @@ npm test
 - https://github.com/nullobject/tetris
 
 ### TODO
-- refactor rotate
 - send cleared lines
 - tick between server and client
 - counterclockwise rotate
