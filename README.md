@@ -29,7 +29,7 @@ npm test
 - https://github.com/nullobject/tetris
 
 ### TODO
-- send cleared lines
+- counterclockwise kick data
 - tick between server and client
 - skins flat, classic, modern
 - ghost blocks

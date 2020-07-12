@@ -7,23 +7,21 @@ export class Board {
   width: number;
   grid: string[][];
   pieceTypes: string[];
-  nextPieceTypes: string[];
-  current: {
-    piece: Piece;
-    player: string;
-  }[];
+  nextPieceTypes: string[] = [];
+  currentPiece: Piece | null = null;
+  level: number = 0;
+  gravityArray: number[] = [];
 
   constructor({ height = 22, width = 10 } = {}) {
     this.height = height;
     this.width = width;
     this.grid = this.getEmptyGrid();
     this.pieceTypes = Piece.getPieceTypes();
-    this.nextPieceTypes = [];
-    this.current = [];
   }
 
   update() {
     // TODO
+
     if (this.nextPieceTypes.length < 10) {
       // Get next 10
     }
@@ -41,7 +39,7 @@ export class Board {
   }
 
   // Helper function to create a grid from visual representation of a grid
-  getGridFromString(str: string) {
+  getGridFromString(str: string, fromTop = true) {
     const lines = str.split('\n');
     let grid: string[][] = [];
     for (let row = 0; row < lines.length; row++) {
@@ -50,6 +48,17 @@ export class Board {
         .padEnd(this.width, ' ')
         .split('')
         .map((s) => s.trim());
+    }
+    while (grid.length < this.height) {
+      const line = ''
+        .padEnd(this.width, ' ')
+        .split('')
+        .map((s) => s.trim());
+      if (fromTop) {
+        grid.push(line);
+      } else {
+        grid.unshift(line);
+      }
     }
     return grid;
   }
@@ -75,8 +84,8 @@ export class Board {
     let valid = false;
     for (let row = 0; row < piece.data.length; row++) {
       for (let col = 0; col < piece.data[0].length; col++) {
-        if (piece.data[row][col]) {
-          this.grid[row + piece.row][col + piece.col] = piece.data[row][col];
+        if (piece.data[row][col] && this.isInsideGrid(row + piece.row, col + piece.col)) {
+          this.grid[row + piece.row][col + piece.col] = piece.type;
           // Check which lines get modified
           if (range.indexOf(col + piece.col) === -1) {
             range.push(col + piece.col);
@@ -114,8 +123,64 @@ export class Board {
     // console.log('range', range);
   }
 
-  toString() {
-    return (
+  getLinesToBeClearedBy(piece: Piece) {
+    const startingRows = piece.row;
+    const linesToBeCleared: string[] = [];
+    for (let row = startingRows; row < startingRows + piece.data.length; row++) {
+      let isFull = true;
+      let line = '';
+      for (let col = 0; col < this.width; col++) {
+        if (!this.isInsideGrid(row, col)) {
+          console.log('Piece is out of the grid', piece);
+          return [];
+        }
+        if (this.grid[row][col] === '' && piece.at(row, col) === '') {
+          isFull = false;
+          break;
+        }
+        if (this.grid[row][col] === '') {
+          line += ' ';
+        } else {
+          line += this.grid[row][col];
+        }
+      }
+      if (isFull) {
+        linesToBeCleared.push(line);
+      }
+    }
+    return linesToBeCleared;
+  }
+
+  isInsideGrid(row, col) {
+    return row >= 0 && row < this.height && col >= 0 && col < this.width;
+  }
+
+  clearLines() {
+    let shiftCount = 0;
+    for (let row = this.height - 1; row >= 0; row--) {
+      let isFull = true;
+      // Check if this row is full of tiles
+      for (let col = 0; col < this.width; col++) {
+        if (this.grid[row][col] === '') {
+          isFull = false;
+        }
+        // Move rows down if there are cleared lines
+        if (shiftCount > 0) {
+          this.grid[row + shiftCount][col] = this.grid[row][col];
+        }
+      }
+      // Clear line
+      if (isFull) {
+        shiftCount += 1;
+        for (let col = 0; col < this.width; col++) {
+          this.grid[row][col] = '';
+        }
+      }
+    }
+  }
+
+  print() {
+    console.log(
       this.grid.map((line) => line.map((c) => (c.length ? c : ' ')).join('')).join('|\n') + '|'
     );
   }

@@ -9,27 +9,27 @@ https://tetris.fandom.com/wiki/SRS
 https://strategywiki.org/wiki/Tetris/Rotation_systems
 https://www.youtube.com/watch?v=yIpk5TJ_uaI
 https://www.youtube.com/watch?v=Atlr5vvdchY
+https://tetris.wiki/Super_Rotation_System#Wall_Kicks
 */
 
 export class Piece {
   type: string;
-  data: string[][];
-  positions: string[][][];
-  posIndex: number;
-  row: number;
-  col: number;
-  kickData: number[][][];
+  data: string[][] = [];
+  positions: string[][][] = [];
+  posIndex: number = 0;
+  row: number = 0;
+  col: number = 0;
+  kickData: number[][][] = [];
 
-  constructor(type: string) {
-    this.type = type;
-    this.data = [];
-    this.positions = [];
-    this.posIndex = 0;
-    this.col = 0;
-    this.row = 0;
-    this.kickData = [];
+  constructor(type: string, row?, col?, position?) {
     this.setProperties(type);
+    this.type = type;
     this.position = 0;
+    if (position !== undefined) this.position = position;
+    if (row !== undefined && col !== undefined) {
+      this.row = row;
+      this.col = col;
+    }
   }
 
   setProperties(type) {
@@ -74,6 +74,18 @@ export class Piece {
     }
   }
 
+  at(row, col): string {
+    if (
+      row - this.row >= 0 &&
+      row - this.row < this.data.length &&
+      col - this.col >= 0 &&
+      col - this.col < this.data.length
+    ) {
+      return this.data[row - this.row][col - this.col];
+    }
+    return '';
+  }
+
   get position() {
     return this.posIndex;
   }
@@ -84,13 +96,15 @@ export class Piece {
     this.data = this.positions[this.posIndex];
   }
 
-  shiftDownOnBoard(board: Board) {
+  shiftDownOnBoard(board: Board): boolean {
     if (this.isValidMoveOnBoard(0, 1, this.data, board)) {
       // TODO: add gravity
       // const gravity = gravityArray[level];
       // this.y += gravity;
       this.row += 1;
+      return true;
     }
+    return false;
   }
 
   hardDropOnBoard(board: Board) {

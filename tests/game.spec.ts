@@ -8,6 +8,6 @@ describe('Game', () => {
   beforeEach(() => (game = new Game()));
 
   it('should inital values', () => {
-    expect(game.pause).true;
+    expect(game.paused).true;
   });
 });

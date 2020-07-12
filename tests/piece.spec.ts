@@ -27,15 +27,15 @@ describe('Piece', () => {
     expect(piece.posIndex).eq(3);
     piece.rotateOnBoard(90, board);
     expect(piece.posIndex).eq(0);
-    // console.log(piece.toString());
+    // console.log(piece.print());
     board.addPiece(piece);
-    // console.log(piece.toString());
-    // console.log(board.toString());
+    // console.log(piece.print());
+    // console.log(board.print());
   });
 
   it('should rotate counterclockwise', () => {
     piece = new Piece('I');
-    piece.row += 2;
+    piece.row += 10;
     piece.rotateOnBoard(-90, board);
     expect(piece.posIndex).eq(3);
     piece.rotateOnBoard(-90, board);
@@ -43,6 +43,8 @@ describe('Piece', () => {
     piece.rotateOnBoard(-90, board);
     expect(piece.posIndex).eq(1);
     piece.rotateOnBoard(-90, board);
+    // board.addPiece(piece);
+    // board.print();
     expect(piece.posIndex).eq(0);
     // board.addPiece(piece);
   });
@@ -52,7 +54,7 @@ describe('Piece', () => {
     const row = piece.row;
     piece.shiftDownOnBoard(board);
     board.addPiece(piece);
-    // console.log(board.toString());
+    // console.log(board.print());
     expect(piece.row).eq(row + 1);
   });
 
@@ -61,7 +63,7 @@ describe('Piece', () => {
     const row = piece.row;
     piece.hardDropOnBoard(board);
     board.addPiece(piece);
-    // console.log(board.toString());
+    // console.log(board.print());
     expect(piece.row).eq(20);
   });
 
@@ -75,42 +77,27 @@ describe('Piece', () => {
       [piece.row, piece.col] = [0, 0];
       piece.rotateOnBoard(90, board);
       board.addPiece(piece);
-      expect(board.grid[0][1]).eq('0');
-      expect(board.grid[1][1]).eq('0');
-      expect(board.grid[2][1]).eq('0');
-      expect(board.grid[2][2]).eq('0');
+      expect(board.grid[0][1]).eq('L');
+      expect(board.grid[1][1]).eq('L');
+      expect(board.grid[2][1]).eq('L');
+      expect(board.grid[2][2]).eq('L');
     });
 
     it('position 0 case 4', () => {
-      [piece.row, piece.col] = [18, 1];
+      [piece.row, piece.col] = [board.grid.length - 3, 1];
       board.grid = board.getGridFromString(
-        `          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-..        
+        `..        
 .         
 .   .     
-.  ..     `
+.  ..     `,
+        false
       );
       piece.rotateOnBoard(90, board);
       board.addPiece(piece);
-      expect(board.grid[18][1]).eq('0');
-      expect(board.grid[19][1]).eq('0');
-      expect(board.grid[19][1]).eq('0');
-      expect(board.grid[19][2]).eq('0');
+      expect(board.grid[board.grid.length - 2][1]).eq('L');
+      expect(board.grid[board.grid.length - 1][1]).eq('L');
+      expect(board.grid[board.grid.length - 1][1]).eq('L');
+      expect(board.grid[board.grid.length - 1][2]).eq('L');
     });
 
     it('position 0 case 5', () => {
@@ -125,11 +112,11 @@ describe('Piece', () => {
       );
       piece.rotateOnBoard(90, board);
       board.addPiece(piece);
-      expect(board.grid[2][1]).eq('0');
-      expect(board.grid[3][1]).eq('0');
-      expect(board.grid[4][1]).eq('0');
-      expect(board.grid[4][2]).eq('0');
-      // console.log(board.toString());
+      expect(board.grid[2][1]).eq('L');
+      expect(board.grid[3][1]).eq('L');
+      expect(board.grid[4][1]).eq('L');
+      expect(board.grid[4][2]).eq('L');
+      // console.log(board.print());
     });
   });
 
@@ -153,18 +140,18 @@ describe('Piece', () => {
       );
       piece.rotateOnBoard(90, board);
       board.addPiece(piece);
-      expect(board.grid[1][2]).eq('0');
-      expect(board.grid[2][1]).eq('0');
-      expect(board.grid[2][2]).eq('0');
-      expect(board.grid[2][3]).eq('0');
+      expect(board.grid[1][2]).eq('T');
+      expect(board.grid[2][1]).eq('T');
+      expect(board.grid[2][2]).eq('T');
+      expect(board.grid[2][3]).eq('T');
       board.removePiece(piece);
       piece.rotateOnBoard(90, board);
       board.addPiece(piece);
-      expect(board.grid[3][1]).eq('0');
-      expect(board.grid[4][1]).eq('0');
-      expect(board.grid[4][2]).eq('0');
-      expect(board.grid[5][1]).eq('0');
-      // console.log(board.toString());
+      expect(board.grid[3][1]).eq('T');
+      expect(board.grid[4][1]).eq('T');
+      expect(board.grid[4][2]).eq('T');
+      expect(board.grid[5][1]).eq('T');
+      // console.log(board.print());
     });
   });
 });
