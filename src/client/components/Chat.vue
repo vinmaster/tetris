@@ -5,7 +5,6 @@
         <pre class="dialog-content">{{ connectedUsers }}</pre>
         <menu class="dialog-menu">
           <button class="nes-btn">Close</button>
-          <!-- <button class="nes-btn is-primary">Confirm</button> -->
         </menu>
       </form>
     </dialog>
@@ -61,6 +60,8 @@
 import { Component, Prop, Vue, Emit } from 'vue-property-decorator';
 // @ts-ignore
 import dialogPolyfill from 'dialog-polyfill';
+import { GameClient } from '../lib/GameClient';
+import { EventBus } from '../lib/EventBus';
 
 interface User {
   username: string;
@@ -75,6 +76,9 @@ interface Message {
 
 @Component
 export default class Chat extends Vue {
+  @Prop({ required: true })
+  gameClient!: GameClient;
+
   isOnline = false;
   connectedUsers: User[] = [];
   userInput = '';
@@ -88,28 +92,7 @@ export default class Chat extends Vue {
   history: string[] = [];
   historyIndex = 0;
 
-  constructor() {
-    super();
-    const that = this;
-
-    this.$options.sockets = {
-      connect() {
-        // that.setup();
-      },
-      disconnect() {
-        that.teardown();
-      },
-      connect_error() {
-        that.teardown();
-      },
-      LIST_USERS(users) {
-        that.onListUsers(users);
-      },
-      CHAT_MESSAGE(data) {
-        that.onNewMessage(data);
-      },
-    };
-  }
+  created() {}
 
   mounted() {
     this.setup();
@@ -130,6 +113,11 @@ export default class Chat extends Vue {
     if (element) {
       element.addEventListener('keyup', this.inputEvent.bind(this));
     }
+
+    EventBus.$on('DISCONNECT', (users) => this.teardown());
+    EventBus.$on('CONNECT_ERROR', (users) => this.teardown());
+    EventBus.$on('LIST_USERS', (users) => this.onListUsers(users));
+    EventBus.$on('CHAT_MESSAGE', (data) => this.onNewMessage(data));
   }
 
   teardown() {
@@ -137,8 +125,9 @@ export default class Chat extends Vue {
 
     const element = document.querySelector('.chat-input');
     if (element) {
-      element.removeEventListener('keydown', this.inputEvent.bind(this));
+      element.removeEventListener('keyup', this.inputEvent.bind(this));
     }
+    EventBus.$off();
   }
 
   @Emit()

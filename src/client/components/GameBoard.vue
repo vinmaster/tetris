@@ -206,108 +206,37 @@ export default class GameBoard extends Vue {
 }
 
 .tile.classic.type-I {
-  background-image: url('/I-background.png');
-  background-repeat: repeat;
+  background-image: url('/I.png');
+  background-size: cover;
 }
 
 .tile.classic.type-O {
-  background-color: #272727;
-  position: relative;
-  border: 1px solid #272727;
-}
-.tile.classic.type-O:before {
-  content: ' ';
-  position: absolute;
-  z-index: 1;
-  top: 3px;
-  left: 3px;
-  right: 3px;
-  bottom: 3px;
-  border: 5px solid #cad2a9;
+  background-image: url('/O.png');
+  background-size: cover;
 }
 
 .tile.classic.type-T {
-  // position: relative;
-  // border: 4px solid #272727;
-  background-image: url('/T-background.png');
+  background-image: url('/T.png');
   background-size: cover;
 }
-// .tile.classic.type-T:before {
-//   content: ' ';
-//   position: absolute;
-//   z-index: 1;
-//   top: 5px;
-//   left: 5px;
-//   right: 5px;
-//   bottom: 5px;
-//   border-width: 5px;
-//   border-style: inset;
-//   border-top-color: #d4f4ce;
-//   border-left-color: #d4f4ce;
-//   border-right-color: #272727;
-//   border-bottom-color: #272727;
-// }
 
 .tile.classic.type-S {
-  background-color: #272727;
-  position: relative;
-  border: 1px solid #272727;
-}
-.tile.classic.type-S:before {
-  content: ' ';
-  position: absolute;
-  z-index: 1;
-  top: 3px;
-  left: 3px;
-  right: 3px;
-  bottom: 3px;
-  border: 8px solid #6b7353;
+  background-image: url('/S.png');
+  background-size: cover;
 }
 
 .tile.classic.type-Z {
-  background-color: #272727;
-  position: relative;
-  border: 2px solid #272727;
-}
-.tile.classic.type-Z:before {
-  content: ' ';
-  position: absolute;
-  z-index: 1;
-  top: 3px;
-  left: 3px;
-  right: 3px;
-  bottom: 3px;
-  border: 10px solid #cad2a9;
+  background-image: url('/Z.png');
+  background-size: cover;
 }
 
 .tile.classic.type-L {
-  background-color: #6b7353;
-  border: 3px solid #272727;
+  background-image: url('/L.png');
+  background-size: cover;
 }
 
 .tile.classic.type-J {
-  background-color: #cad2a9;
-  position: relative;
-  border: 4px solid #272727;
-}
-.tile.classic.type-J:before {
-  content: ' ';
-  position: absolute;
-  z-index: 1;
-  top: 0px;
-  left: 0px;
-  right: 0px;
-  bottom: 0px;
-  border: 4px solid #6b7353;
-}
-.tile.classic.type-J:after {
-  content: ' ';
-  position: absolute;
-  z-index: 2;
-  top: 4px;
-  left: 4px;
-  right: 4px;
-  bottom: 4px;
-  border: 4px solid #272727;
+  background-image: url('/J.png');
+  background-size: cover;
 }
 </style>

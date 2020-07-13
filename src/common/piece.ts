@@ -96,6 +96,13 @@ export class Piece {
     this.data = this.positions[this.posIndex];
   }
 
+  shiftLeftRightOnBoard(direction: 'left' | 'right', board: Board) {
+    const dx = direction === 'right' ? 1 : -1;
+    if (this.isValidMoveOnBoard(dx, 0, this.data, board)) {
+      this.col += dx;
+    }
+  }
+
   shiftDownOnBoard(board: Board): boolean {
     if (this.isValidMoveOnBoard(0, 1, this.data, board)) {
       // TODO: add gravity
@@ -132,10 +139,10 @@ export class Piece {
     const newPos = Utility.modulo(this.position + posDir, 4);
 
     for (let i = 0, len = this.kickData[0].length; i < len; i++) {
-      const [cx, cy] = this.kickData[this.position][i];
-      if (this.isValidMoveOnBoard(this.col + cx, Math.floor(this.row + cy), rotated, board)) {
-        this.col += cx;
-        this.row += cy;
+      const [dx, dy] = this.kickData[this.position][i];
+      if (this.isValidMoveOnBoard(this.col + dx, Math.floor(this.row + dy), rotated, board)) {
+        this.col += dx;
+        this.row += dy;
         this.position = newPos;
         isRotated = true;
         break;
@@ -145,17 +152,17 @@ export class Piece {
     return isRotated;
   }
 
-  isValidMoveOnBoard(cx, cy, data, board: Board): boolean {
+  isValidMoveOnBoard(dx, dy, data, board: Board): boolean {
     for (let row = 0; row < data.length; row++) {
       for (let col = 0; col < data[row].length; col++) {
         if (
           data[row][col] &&
-          (cy + row < 0 ||
-            cx + col < 0 ||
-            cy + row >= board.height ||
-            cx + col >= board.width ||
-            board.grid[cy + row] === undefined ||
-            board.grid[cy + row][cx + col].length > 0)
+          (dy + row < 0 ||
+            dx + col < 0 ||
+            dy + row >= board.height ||
+            dx + col >= board.width ||
+            board.grid[dy + row] === undefined ||
+            board.grid[dy + row][dx + col].length > 0)
         ) {
           return false;
         }

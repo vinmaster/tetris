@@ -6,6 +6,7 @@ import cors from '@koa/cors';
 import http from 'http';
 import socketio from 'socket.io';
 import { WebSocketServer } from './web-socket/web-socket-server';
+import { GameServer } from './game/game-server';
 
 const app = new Koa();
 const router = new Router();
@@ -14,7 +15,7 @@ const PORT = process.env.PORT || 8000;
 // Setup websocket
 const server = http.createServer(app.callback());
 const io = socketio(server);
-WebSocketServer.setup(io);
+WebSocketServer.setup(io, new GameServer());
 
 if (process.env.NODE_ENV === 'production') {
   const {

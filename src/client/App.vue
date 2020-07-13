@@ -1,6 +1,8 @@
 <template>
   <div id="app">
-    <div class="content">WORK IN PROGRESS</div>
+    <div class="content">
+      <game-view :gameClient="gameClient"></game-view>
+    </div>
     <button class="toggle-btn" type="button" @click="toggleChat()" v-show="!chatOpen">
       <svg viewBox="0 0 100 80" width="40" height="40">
         <rect width="100" height="15"></rect>
@@ -10,7 +12,7 @@
     </button>
     <transition name="slide">
       <div class="chat" v-show="chatOpen">
-        <chat @toggle="toggleChat"></chat>
+        <chat @toggle="toggleChat" :gameClient="gameClient"></chat>
       </div>
     </transition>
   </div>
@@ -20,33 +22,40 @@
 import 'nes.css/css/nes.min.css';
 import { Component, Vue } from 'vue-property-decorator';
 import Chat from './components/Chat.vue';
+import GameView from './components/GameView.vue';
+import { GameClient } from './lib/GameClient';
+import { EventBus } from './lib/EventBus';
 
 @Component({
   components: {
     Chat,
-  },
-  sockets: {
-    connect() {
-      console.log('[connected]');
-      const username = prompt('Please enter a username:');
-      this.$socket.client.emit('REGISTER', username);
-    },
-    disconnect() {
-      console.log('[disconnected]');
-    },
-    LOGS(data) {
-      console.log('[LOGS]', data);
-    },
-    FORCE_REFRESH() {
-      window.location.reload(true);
-    },
+    GameView,
   },
 })
 export default class App extends Vue {
-  chatOpen = false;
+  gameClient: GameClient = new GameClient();
+  chatOpen = window.innerWidth > 1200;
+
+  constructor() {
+    super();
+    this.gameClient.socket = this.$socket;
+    this.$options.sockets = this.gameClient.socketListeners;
+  }
 
   toggleChat(msg: any) {
     this.chatOpen = !this.chatOpen;
+    setTimeout(() => {
+      EventBus.$emit('CHAT_TOGGLE', this.chatOpen);
+    }, 500);
+  }
+
+  mounted() {
+    this.gameClient.setup();
+  }
+
+  destroyed() {
+    console.log('App destroyed');
+    this.gameClient.teardown();
   }
 }
 </script>
@@ -85,30 +94,8 @@ samp {
   font-size: 30px;
 }
 
-.content:after {
-  overflow: hidden;
-  display: inline-block;
-  vertical-align: bottom;
-  -webkit-animation: ellipsis steps(4, end) 900ms infinite;
-  animation: ellipsis steps(4, end) 900ms infinite;
-  content: '\2026'; /* ascii code for the ellipsis character */
-  width: 0px;
-}
-
-@keyframes ellipsis {
-  to {
-    width: 1.25em;
-  }
-}
-
-@-webkit-keyframes ellipsis {
-  to {
-    width: 1.25em;
-  }
-}
-
 .chat {
-  width: 500px;
+  width: 400px;
 }
 
 @media only screen and (max-width: 500px) {
@@ -127,10 +114,10 @@ samp {
 }
 
 .slide-enter-active {
-  transition: all 0.3s ease;
+  transition: transform 0.3s ease;
 }
 .slide-leave-active {
-  transition: all 0.3s ease;
+  transition: transform 0.3s ease;
   /* transition: all 0.3s cubic-bezier(1, 0.5, 0.8, 1); */
 }
 .slide-enter,

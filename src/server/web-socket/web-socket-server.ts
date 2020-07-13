@@ -1,5 +1,6 @@
 import { Utility } from '../../common/utility';
 import { CONSTANTS } from '../../common/constants';
+import { GameServer } from '../game/game-server';
 
 interface User {
   id: string;
@@ -11,10 +12,12 @@ interface User {
 export class WebSocketServer {
   static io: SocketIO.Server;
   static users: { [id: string]: User | undefined } = {};
+  static gameServer: GameServer;
 
-  static setup(io: SocketIO.Server) {
+  static setup(io: SocketIO.Server, gameServer: GameServer) {
     this.io = io;
     this.io.on('connection', this.onConnection.bind(this));
+    this.gameServer = gameServer;
   }
 
   static onConnection(socket: SocketIO.Socket) {
@@ -33,8 +36,10 @@ export class WebSocketServer {
 
     socket.on(CONSTANTS.SOCKET.REGISTER, (username: string) => {
       obj['username'] = username;
-      this.addUser(obj);
+      const user = this.addUser(obj);
       socket.join('chatroom');
+      this.io.to(socket.id).emit('REGISTERED', user);
+      socket.emit('ADD_USER', user);
     });
 
     socket.on(CONSTANTS.CHAT.MESSAGE, (message: string) => {
@@ -342,12 +347,15 @@ export class WebSocketServer {
 
     const usernameColor = Utility.getRandomColor();
 
-    this.users[obj.id] = {
+    const user = {
       id: obj.id,
       userId: Utility.createUUID(),
       username: obj.username,
       usernameColor,
     };
+    this.users[obj.id] = user;
+
+    return user;
   }
 
   static removeUser(id: string, broadcast = true) {

@@ -1,35 +1,48 @@
 import { Board } from './board';
+import { Piece } from './piece';
 
 interface Player {
   userId: string;
+  username: string;
+  pieceIndex: number;
 }
 
 export class Game {
   players: { [userId: string]: Player } = {};
   boards: { [userId: string]: Board } = {};
   pieces = [];
-  currentPiece = {};
-  nextPiece = {};
+  currentPiece: Piece = new Piece('O');
+  pieceHistory: string[] = [];
   linesCleared = {};
   totalPieces = {};
   score = {};
   paused = true;
 
-  constructor() {}
+  constructor() {
+    this.pieceHistory = this.pieceHistory.concat(this.getNewPieces(10));
+  }
 
   teardown() {
+    console.log('Game teardown');
     this.players = {};
     this.boards = {};
     this.pieces = [];
-    this.currentPiece = {};
-    this.nextPiece = {};
+    this.currentPiece = new Piece('O');
+    this.pieceHistory = [];
     this.linesCleared = {};
     this.totalPieces = {};
     this.score = {};
   }
 
+  findPlayer(username): Player | null {
+    const player = Object.values(this.players).find((p) => p.username === username);
+    if (player) return player;
+    else return null;
+  }
+
   addPlayer(player: Player) {
     if (!this.players[player.userId]) {
+      player.pieceIndex = 0;
       this.players[player.userId] = player;
       this.boards[player.userId] = new Board();
     }
@@ -40,12 +53,30 @@ export class Game {
     delete this.boards[userId];
   }
 
-  getPlayer(userId): Player {
-    return this.players[userId];
-  }
-
   listPlayers(): Player[] {
     return Object.values(this.players);
+  }
+
+  getNewPieces(count: number): string[] {
+    const newPieces: string[] = [];
+    const types = Piece.getPieceTypes();
+    for (let i = 0; i < count; i++) {
+      const randIndex = Math.floor(Math.random() * 6);
+      newPieces.push(types[randIndex]);
+    }
+    return newPieces;
+  }
+
+  resetGame() {
+    this.pieceHistory = this.getNewPieces(10);
+    for (const p of this.listPlayers()) {
+      p.pieceIndex = 0;
+    }
+  }
+
+  getNextPiece(userId) {
+    this.players[userId].pieceIndex += 1;
+    this.currentPiece = new Piece(this.pieceHistory[this.players[userId].pieceIndex]);
   }
 
   update() {
@@ -56,6 +87,7 @@ export class Game {
         const board = this.boards[userId];
         if (!board.currentPiece) return;
 
+        // TODO: shift down by gravity
         if (!board.currentPiece.shiftDownOnBoard(board)) {
           const linesToBeCleared = board.getLinesToBeClearedBy(board.currentPiece);
           board.addPiece(board.currentPiece);
@@ -64,6 +96,10 @@ export class Game {
           }
         }
 
+        // Check if should spawn more pieces
+        if (this.pieceHistory.length - this.players[userId].pieceIndex < 10) {
+          this.pieceHistory = this.pieceHistory.concat(this.getNewPieces(10));
+        }
         // if (!board.spawnNextPiece()) {
         //   // Game over
         //   this.paused = true;

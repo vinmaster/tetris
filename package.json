@@ -36,6 +36,8 @@
     "koa-sendfile": "^2.0.1",
     "koa-sslify": "^4.0.3",
     "nes.css": "^2.3.0",
+    "sass": "^1.26.10",
+    "sass-loader": "^9.0.2",
     "socket.io": "^2.3.0",
     "socket.io-client": "^2.3.0",
     "typescript": "^3.9.6",

@@ -17,6 +17,16 @@ export const CONSTANTS = {
     READY: 'READY',
     PLAYING: 'PLAYING',
   },
+  KEYCODES: {
+    UP: 38,
+    DOWN: 40,
+    LEFT: 37,
+    RIGHT: 39,
+    SPACE: 32,
+    X: 88,
+    Z: 90,
+    C: 67,
+  },
   POSITIONS_I: [
     [
       ['', '', '', ''],
