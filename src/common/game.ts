@@ -1,21 +1,16 @@
 import { Board } from './board';
 import { Piece } from './piece';
-
-interface Player {
-  userId: string;
-  username: string;
-  pieceIndex: number;
-}
+import { User } from './user';
 
 export class Game {
-  players: { [userId: string]: Player } = {};
+  users: { [userId: string]: User } = {};
   boards: { [userId: string]: Board } = {};
-  pieces = [];
   currentPiece: Piece = new Piece('O');
   pieceHistory: string[] = [];
-  linesCleared = {};
-  totalPieces = {};
-  score = {};
+  gameState: 'WAITING' | 'START' | 'PAUSED' | 'GAME_OVER' = 'WAITING';
+  // linesCleared = {};
+  // totalPieces = {};
+  // score = {};
   paused = true;
 
   constructor() {
@@ -23,38 +18,37 @@ export class Game {
   }
 
   teardown() {
-    console.log('Game teardown');
-    this.players = {};
+    this.users = {};
     this.boards = {};
-    this.pieces = [];
     this.currentPiece = new Piece('O');
     this.pieceHistory = [];
-    this.linesCleared = {};
-    this.totalPieces = {};
-    this.score = {};
+    // this.linesCleared = {};
+    // this.totalPieces = {};
+    // this.score = {};
   }
 
-  findPlayer(username): Player | null {
-    const player = Object.values(this.players).find((p) => p.username === username);
-    if (player) return player;
+  findUser(username): User | null {
+    const user = Object.values(this.users).find((p) => p.username === username);
+    if (user) return user;
     else return null;
   }
 
-  addPlayer(player: Player) {
-    if (!this.players[player.userId]) {
-      player.pieceIndex = 0;
-      this.players[player.userId] = player;
-      this.boards[player.userId] = new Board();
+  addUser(user: User) {
+    if (!this.users[user.userId]) {
+      user.pieceIndex = -1;
+      user.state = 'WAITING';
+      this.users[user.userId] = user;
+      this.boards[user.userId] = new Board();
     }
   }
 
-  removePlayer(userId) {
-    delete this.players[userId];
+  removeUser(userId) {
+    delete this.users[userId];
     delete this.boards[userId];
   }
 
-  listPlayers(): Player[] {
-    return Object.values(this.players);
+  listUsers(): User[] {
+    return Object.values(this.users);
   }
 
   getNewPieces(count: number): string[] {
@@ -69,43 +63,42 @@ export class Game {
 
   resetGame() {
     this.pieceHistory = this.getNewPieces(10);
-    for (const p of this.listPlayers()) {
+    for (const p of this.listUsers()) {
       p.pieceIndex = 0;
     }
   }
 
   getNextPiece(userId) {
-    this.players[userId].pieceIndex += 1;
-    this.currentPiece = new Piece(this.pieceHistory[this.players[userId].pieceIndex]);
+    this.users[userId].pieceIndex += 1;
+    return new Piece(this.pieceHistory[this.users[userId].pieceIndex]);
   }
 
   update() {
-    if (!this.paused) {
-      // Check inputs
+    // Check inputs
 
-      for (const userId of Object.keys(this.players)) {
-        const board = this.boards[userId];
-        if (!board.currentPiece) return;
+    for (const userId of Object.keys(this.users)) {
+      console.log('piecehistory', this.users[userId].pieceIndex, this.pieceHistory);
+      const board = this.boards[userId];
+      if (!board.currentPiece) board.currentPiece = this.getNextPiece(userId);
 
-        // TODO: shift down by gravity
-        if (!board.currentPiece.shiftDownOnBoard(board)) {
-          const linesToBeCleared = board.getLinesToBeClearedBy(board.currentPiece);
-          board.addPiece(board.currentPiece);
-          if (linesToBeCleared.length > 0) {
-            board.clearLines();
-          }
+      // TODO: shift down by gravity
+      if (!board.currentPiece.shiftDownOnBoard(board)) {
+        const linesToBeCleared = board.getLinesToBeClearedBy(board.currentPiece);
+        board.addPiece(board.currentPiece);
+        if (linesToBeCleared.length > 0) {
+          board.clearLines();
         }
-
-        // Check if should spawn more pieces
-        if (this.pieceHistory.length - this.players[userId].pieceIndex < 10) {
-          this.pieceHistory = this.pieceHistory.concat(this.getNewPieces(10));
-        }
-        // if (!board.spawnNextPiece()) {
-        //   // Game over
-        //   this.paused = true;
-        //   return;
-        // }
       }
+
+      // Check if should spawn more pieces
+      if (this.pieceHistory.length - this.users[userId].pieceIndex < 10) {
+        this.pieceHistory = this.pieceHistory.concat(this.getNewPieces(10));
+      }
+      // if (!board.spawnNextPiece()) {
+      //   // Game over
+      //   this.paused = true;
+      //   return;
+      // }
     }
   }
 
@@ -222,7 +215,7 @@ export class Game {
   //   this.totalPieces[id]++;
   // }
 
-  calculateScore(id) {
-    this.score[id] = this.totalPieces[id] * 100 + this.linesCleared[id] * 1000;
-  }
+  // calculateScore(id) {
+  //   this.score[id] = this.totalPieces[id] * 100 + this.linesCleared[id] * 1000;
+  // }
 }

@@ -7,10 +7,10 @@ export class Board {
   width: number;
   grid: string[][];
   pieceTypes: string[];
-  nextPieceTypes: string[] = [];
   currentPiece: Piece | null = null;
-  level: number = 0;
-  gravityArray: number[] = [];
+  // nextPieceTypes: string[] = [];
+  // level: number = 0;
+  // gravityArray: number[] = [];
 
   constructor({ height = 22, width = 10 } = {}) {
     this.height = height;
@@ -21,10 +21,9 @@ export class Board {
 
   update() {
     // TODO
-
-    if (this.nextPieceTypes.length < 10) {
-      // Get next 10
-    }
+    // if (this.nextPieceTypes.length < 10) {
+    //   // Get next 10
+    // }
   }
 
   getEmptyGrid() {

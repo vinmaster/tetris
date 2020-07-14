@@ -29,8 +29,8 @@ npm test
 - https://github.com/nullobject/tetris
 
 ### TODO
-- refactor to use user id instead of socket id
+- fix game loop
+- first turn grab bag
 - counterclockwise kick data
 - tick between server and client
-- skins flat, classic, modern
 - ghost blocks

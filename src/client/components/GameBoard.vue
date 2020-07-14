@@ -1,10 +1,6 @@
 <template>
-  <div class="board nes-container is-dark" :style="boardStyle" ref="boardElement" v-if="board">
-    <div
-      class="row"
-      v-for="(row, rowIndex) in board.grid.slice(Math.max(board.grid.length - 20, 0))"
-      :key="rowIndex"
-    >
+  <div class="board nes-container is-dark" :style="boardStyle" v-if="board" ref="element">
+    <div class="row" v-for="(row, rowIndex) in computedBoard" :key="rowIndex">
       <div
         class="tile"
         v-for="(tile, colIndex) in row"
@@ -49,7 +45,7 @@ export default class GameBoard extends Vue {
   tileStyle = {};
 
   $refs!: {
-    boardElement: HTMLDivElement;
+    element: HTMLDivElement;
   };
 
   created() {
@@ -62,6 +58,11 @@ export default class GameBoard extends Vue {
     setTimeout(() => {
       this.setup();
     }, 300);
+  }
+
+  get computedBoard() {
+    if (!this.board.grid) return [];
+    return this.board.grid.slice(Math.max(this.board.grid.length - 20, 0))
   }
 
   // beforeDestroy() {
@@ -81,7 +82,7 @@ export default class GameBoard extends Vue {
   setBoardSize() {
     // 8px border size
     // const parent = document.getElementsByClassName('board-container')[0];
-    const parent = this.$refs.boardElement;
+    const parent = this.$refs.element;
     if (!parent) return;
     const boardWidth = 10; //this.board.width;
     const boardHeight = 20; //this.board.width;

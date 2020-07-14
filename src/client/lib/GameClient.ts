@@ -1,15 +1,18 @@
 import { Game } from '@/common/game';
 import { EventBus } from './EventBus';
+import { CONSTANTS } from '@/common/constants';
+import { User } from '@/common/user';
 
 export class GameClient extends Game {
   ready = false;
   socket!: {
     client: SocketIOClient.Socket;
   };
-  currentPlayer = null;
+  currentUser!: User;
   secondsPassed;
-  oldTimeStamp;
+  oldTimeStamp = 0;
   fps;
+  lastUpdate = 0;
 
   constructor() {
     super();
@@ -23,17 +26,19 @@ export class GameClient extends Game {
       if (username) localStorage.setItem('username', username);
     }
 
-    this.socket.client.emit('REGISTER', username);
+    this.socket.client.emit(CONSTANTS.SOCKET.REGISTER, username);
 
     EventBus.$on('GET_BOARD', () => {
-      const player = this.findPlayer(username);
-      if (player) {
-        const board = this.boards[player.userId];
-        EventBus.$emit('LOAD_BOARD', board);
-      }
+      this.socket.client.emit(CONSTANTS.SOCKET.UPDATE_BOARDS);
     });
 
-    // this.gameLoop(+new Date());
+    EventBus.$on('STATE_CHANGE', (state) => {
+      this.socket.client.emit(CONSTANTS.SOCKET.STATE_CHANGE, state);
+    });
+
+    // EventBus.$on('NOT_READY', () => {
+    //   this.socket.client.emit(CONSTANTS.STATES.NOT_READY);
+    // });
   }
 
   teardown() {
@@ -54,10 +59,22 @@ export class GameClient extends Game {
     this.fps = newFps;
 
     // Perform update
-    // this.update();
+    if (this.secondsPassed + this.lastUpdate > 3) {
+      this.update();
+      this.lastUpdate = 0;
+    } else {
+      this.lastUpdate += this.secondsPassed;
+    }
 
     // The loop function has reached it's end. Keep requesting new frames
     window.requestAnimationFrame(this.gameLoop.bind(this));
+  }
+
+  updateGameState(state) {
+    this.gameState = state;
+    if (state === 'START') {
+      this.gameLoop(0);
+    }
   }
 
   // this.board.removePiece(this.current);
@@ -114,24 +131,49 @@ export class GameClient extends Game {
       },
 
       // Game
+      SET_USERNAME(username) {
+        localStorage.setItem('username', username);
+      },
       REGISTERED(user) {
-        that.addPlayer(user);
-        console.log('registered', user);
-        that.currentPlayer = user;
-        that.boards[user.userId].grid = that.boards[user.userId].getGridFromString(
-          ` .  .     
-OO ZZ  SS 
-OO  ZZSS  
-I ...     
-I  L. J  T
-I .L. J TT
-I  LLJJ..T`,
-          false
-        );
-        EventBus.$emit('LOAD_BOARD', that.boards[user.userId]);
+        that.currentUser = user;
+        that.addUser(user);
+        console.log('Registered', user);
+        that.currentUser = user;
+        //         that.boards[user.userId].grid = that.boards[user.userId].getGridFromString(
+        //           ` .  .
+        // OO ZZ  SS
+        // OO  ZZSS
+        // I ...
+        // I  L. J  T
+        // I .L. J TT
+        // I  LLJJ..T`,
+        //           false
+        //         );
+        that.socket.client.emit(CONSTANTS.SOCKET.UPDATE_BOARDS);
+      },
+      ADD_USER(user) {
+        that.addUser(user);
+        that.socket.client.emit(CONSTANTS.SOCKET.UPDATE_BOARDS);
+      },
+      REMOVE_USER(userId) {
+        that.removeUser(userId);
       },
       READY(data) {
         console.log('READY', data);
+      },
+      UPDATE_BOARDS(boards) {
+        EventBus.$emit('UPDATE_BOARDS', boards);
+      },
+      UPDATE_PIECES(pieceHistory) {
+        that.pieceHistory = pieceHistory;
+      },
+      UPDATE_GAME_STATE(state) {
+        that.updateGameState(state);
+        EventBus.$emit('UPDATE_GAME_STATE', state);
+      },
+      STATE_CHANGE(user) {
+        that.users[user.userId].state = user.state;
+        EventBus.$emit('UPDATE_USER_STATE', user);
       },
 
       // Admins

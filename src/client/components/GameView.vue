@@ -1,11 +1,7 @@
 <template>
   <section class="grid-container nes-container is-dark">
     <div class="opponents-container">
-      <game-board :skin="skin" :board="myBoard"></game-board>
-      <game-board :skin="skin" :board="myBoard"></game-board>
-      <game-board :skin="skin" :board="myBoard"></game-board>
-      <game-board :skin="skin" :board="myBoard"></game-board>
-      <game-board :skin="skin" :board="myBoard"></game-board>
+      <game-board v-for="board in opponentBoards" :skin="skin" :board="board"></game-board>
     </div>
     <div class="info">
       <section class="nes-container is-dark hold-container"></section>
@@ -56,6 +52,8 @@
       >
         {{ actionText }}
       </button>
+      <div class="state">State: {{ userState }}</div>
+      <div class="state">Game State: {{ gameState }}</div>
       <div>FPS: {{ fps }}</div>
     </div>
     <section class="board-container">
@@ -71,6 +69,8 @@ import GameBoard from './GameBoard.vue';
 import { GameClient } from '../lib/GameClient';
 import { Board } from '../../common/board';
 import { EventBus } from '../lib/EventBus';
+import { Utility } from '../../common/utility';
+import { CONSTANTS } from '../../common/constants';
 
 @Component({
   components: {
@@ -81,7 +81,9 @@ export default class GameView extends Vue {
   @Prop({ required: true })
   gameClient!: GameClient;
 
-  myBoard: Board | null = null;
+  boards: { [userId: string]: Board } = {};
+  userState: string = 'WAITING';
+  gameState: string = '';
   actionText = 'Ready?';
   skin: string = 'modern';
   fps = 0;
@@ -95,13 +97,19 @@ export default class GameView extends Vue {
   }
 
   setup() {
-    if (!this.myBoard) {
+    if (Object.keys(this.boards).length === 0) {
       EventBus.$emit('GET_BOARD');
     }
-    EventBus.$on('LOAD_BOARD', this.loadBoard.bind(this));
+    EventBus.$on('UPDATE_BOARDS', this.loadBoards.bind(this));
     EventBus.$on('FPS', (fps) => {
       this.fps = fps;
     });
+    EventBus.$on('UPDATE_GAME_STATE', (state) => this.gameState = state);
+    EventBus.$on('UPDATE_USER_STATE', (user) => {
+      if (this.gameClient.currentUser && this.gameClient.currentUser.userId === user.userId) {
+        this.userState = user.state;
+      }
+    })
   }
 
   teardown() {
@@ -112,16 +120,34 @@ export default class GameView extends Vue {
     // console.log(this.skin);
   }
 
-  loadBoard(board) {
-    this.myBoard = board;
+  get opponentBoards() {
+    if (Object.keys(this.boards).length === 0 || !this.gameClient.currentUser) return {};
+
+    const opponentIds = Object.keys(this.boards).filter(
+      (userId) => userId !== this.gameClient.currentUser.userId
+    );
+    return opponentIds.reduce((acc, current) => {
+      acc[current] = this.boards[current];
+      return acc;
+    }, {});
+  }
+
+  get myBoard() {
+    if (Object.keys(this.boards).length === 0 || !this.gameClient.currentUser) return {};
+    return this.boards[this.gameClient.currentUser.userId];
+  }
+
+  loadBoards(boards: { [userId: string]: Board }) {
+    console.log('loading boards', boards);
+    this.boards = boards;
   }
 
   actionClicked() {
     if (this.actionText === 'Ready?') {
-      EventBus.$emit('READY');
+      EventBus.$emit('STATE_CHANGE', CONSTANTS.STATES.READY);
       this.actionText = 'Ready';
     } else {
-      EventBus.$emit('NOT_READY');
+      EventBus.$emit('STATE_CHANGE', CONSTANTS.STATES.WAITING);
       this.actionText = 'Ready?';
     }
   }
@@ -163,6 +189,10 @@ export default class GameView extends Vue {
 
 .next-container-small {
   display: none;
+}
+
+.state {
+  font-size: 14px;
 }
 
 @media only screen and (max-width: 500px) {
