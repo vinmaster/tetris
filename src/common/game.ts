@@ -40,6 +40,7 @@ export class Game {
     delete this.boards[userId];
     if (Object.keys(this.users).length === 0) {
       this.gameState = 'WAITING';
+      this.pieceHistory = this.getNewPieces(100);
     }
   }
 

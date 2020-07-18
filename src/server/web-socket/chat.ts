@@ -214,6 +214,7 @@ export class Chat {
       case 'forcerefresh':
         if (WebSocketServer.isAdmin(socket.id)) {
           WebSocketServer.broadcastAll('FORCE_REFRESH');
+          WebSocketServer.gameServer.pieceHistory = WebSocketServer.gameServer.getNewPieces(100);
           output = 'Refreshing';
         } else {
           output = 'Invalid command';

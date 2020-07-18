@@ -200,7 +200,7 @@ export class GameClient extends Game {
         EventBus.$emit('UPDATE_BOARDS', boards);
       },
       [CONSTANTS.SOCKET.UPDATE_SINGLE_BOARD](data) {
-        // if (!data || !THIS.currentUser || data.userId === THIS.currentUser.userId) return;
+        if (!data || !THIS.currentUser || data.userId === THIS.currentUser.userId) return;
         if (!THIS.currentUser) return;
         EventBus.$emit('UPDATE_SINGLE_BOARD', data);
       },
