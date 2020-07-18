@@ -1,10 +1,18 @@
 <template>
   <section class="grid-container nes-container is-dark">
     <div class="opponents-container">
-      <game-board v-for="board in opponentBoards" :skin="skin" :board="board"></game-board>
+      <game-board
+        v-for="(board, index) in opponentBoards"
+        :skin="skin"
+        :board="board"
+        :key="index"
+      ></game-board>
     </div>
     <div class="info">
-      <section class="nes-container is-dark hold-container"></section>
+      <section class="nes-container is-dark hold-container">
+        <div>Holding:</div>
+        <div v-if="myBoard && myBoard.holdPiece">{{ myBoard.holdPiece.type }}</div>
+      </section>
       <section class="nes-container is-dark next-container next-container-small"></section>
       <section class="skin-radio">
         <label>
@@ -47,7 +55,7 @@
       <button
         class="nes-btn"
         v-show="!gameClient.ready"
-        :class="{ 'is-success': actionText == 'Ready' }"
+        :class="{ 'is-success': actionText == 'Ready' || userState == 'PLAYING' }"
         @click="actionClicked()"
       >
         {{ actionText }}
@@ -59,7 +67,10 @@
     <section class="board-container">
       <game-board :skin="skin" :board="myBoard"></game-board>
     </section>
-    <section class="nes-container is-dark next-container next-container-big"></section>
+    <section class="nes-container is-dark next-container next-container-big">
+      <div>Next:</div>
+      <div v-for="(type, index) in nextPieces" :key="index">{{ type }}</div>
+    </section>
   </section>
 </template>
 
@@ -71,6 +82,7 @@ import { Board } from '../../common/board';
 import { EventBus } from '../lib/EventBus';
 import { Utility } from '../../common/utility';
 import { CONSTANTS } from '../../common/constants';
+import { Piece } from '../../common/piece';
 
 @Component({
   components: {
@@ -82,9 +94,9 @@ export default class GameView extends Vue {
   gameClient!: GameClient;
 
   boards: { [userId: string]: Board } = {};
+  nextPieces: string[] = [];
   userState: string = 'WAITING';
   gameState: string = '';
-  actionText = 'Ready?';
   skin: string = 'modern';
   fps = 0;
 
@@ -100,16 +112,18 @@ export default class GameView extends Vue {
     if (Object.keys(this.boards).length === 0) {
       EventBus.$emit('GET_BOARD');
     }
-    EventBus.$on('UPDATE_BOARDS', this.loadBoards.bind(this));
+    EventBus.$on(CONSTANTS.SOCKET.REMOVE_USER, this.removeUser.bind(this));
+    EventBus.$on(CONSTANTS.SOCKET.UPDATE_BOARDS, this.loadBoards.bind(this));
+    EventBus.$on(CONSTANTS.SOCKET.UPDATE_SINGLE_BOARD, this.loadSingleBoard.bind(this));
     EventBus.$on('FPS', (fps) => {
       this.fps = fps;
     });
-    EventBus.$on('UPDATE_GAME_STATE', (state) => this.gameState = state);
+    EventBus.$on('UPDATE_GAME_STATE', (state) => (this.gameState = state));
     EventBus.$on('UPDATE_USER_STATE', (user) => {
       if (this.gameClient.currentUser && this.gameClient.currentUser.userId === user.userId) {
         this.userState = user.state;
       }
-    })
+    });
   }
 
   teardown() {
@@ -132,24 +146,52 @@ export default class GameView extends Vue {
     }, {});
   }
 
-  get myBoard() {
+  get myBoard(): Board | {} {
     if (Object.keys(this.boards).length === 0 || !this.gameClient.currentUser) return {};
     return this.boards[this.gameClient.currentUser.userId];
   }
 
+  removeUser(userId) {
+    Vue.set(this.boards, userId, null);
+    // Vue.delete(this.boards, userId);
+  }
+
   loadBoards(boards: { [userId: string]: Board }) {
-    console.log('loading boards', boards);
-    this.boards = boards;
+    for (const userId of Object.keys(boards)) {
+      // this.boards[userId] = Board.cloneFrom(boards[userId]);
+      Vue.set(this.boards, userId, Board.cloneFrom(boards[userId]));
+      // for (let row = 0; row < boards[userId].height; row++) {
+      //   this.boards[userId].grid[row] = boards[userId].grid[row].slice();
+      // }
+      // console.log('board', this.boards[userId].print());
+    }
+  }
+
+  loadSingleBoard(data: { userId: string; board: Board }) {
+    if (!data.userId || !data.board) return;
+
+    const board = Board.cloneFrom(data.board);
+    const index = this.gameClient.currentUser.pieceIndex + 1;
+    this.nextPieces = this.gameClient.pieceHistory.slice(index, index + 3);
+    Vue.set(this.boards, data.userId, board);
   }
 
   actionClicked() {
-    if (this.actionText === 'Ready?') {
-      EventBus.$emit('STATE_CHANGE', CONSTANTS.STATES.READY);
-      this.actionText = 'Ready';
+    if (this.actionText === 'READY?') {
+      EventBus.$emit('BUS_STATE_CHANGE', CONSTANTS.STATES.READY);
     } else {
-      EventBus.$emit('STATE_CHANGE', CONSTANTS.STATES.WAITING);
-      this.actionText = 'Ready?';
+      EventBus.$emit('BUS_STATE_CHANGE', CONSTANTS.STATES.WAITING);
     }
+  }
+
+  get actionText() {
+    if (this.userState === 'WAITING') {
+      return 'READY?';
+    }
+    // } else if (this.userState === 'PLAYING') {
+    //   return 'PAUSE';
+    // }
+    return this.userState;
   }
 }
 </script>
@@ -169,8 +211,11 @@ export default class GameView extends Vue {
 }
 
 .hold-container {
-  height: 200px;
+  height: 100px;
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  place-items: center;
 }
 
 .board-container {
@@ -185,6 +230,14 @@ export default class GameView extends Vue {
 .skin-radio {
   background-color: #212529;
   width: 148px;
+}
+
+.next-container {
+  height: 200px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  place-items: center;
 }
 
 .next-container-small {

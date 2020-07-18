@@ -8,15 +8,25 @@ export class Board {
   grid: string[][];
   pieceTypes: string[];
   currentPiece: Piece | null = null;
+  holdPiece: Piece | null = null;
   // nextPieceTypes: string[] = [];
   // level: number = 0;
   // gravityArray: number[] = [];
 
-  constructor({ height = 22, width = 10 } = {}) {
+  constructor({ height = 20, width = 10 } = {}) {
     this.height = height;
     this.width = width;
     this.grid = this.getEmptyGrid();
     this.pieceTypes = Piece.getPieceTypes();
+  }
+
+  static cloneFrom(obj): Board {
+    const board = new Board(obj);
+    board.currentPiece = Piece.cloneFrom(obj.currentPiece);
+    board.grid = obj.grid;
+    board.pieceTypes = obj.pieceTypes;
+    board.holdPiece = Piece.cloneFrom(obj.holdPiece);
+    return board;
   }
 
   update() {
@@ -130,8 +140,9 @@ export class Board {
       let line = '';
       for (let col = 0; col < this.width; col++) {
         if (!this.isInsideGrid(row, col)) {
-          console.log('Piece is out of the grid', piece);
-          return [];
+          // console.log('Piece is out of the grid', piece, row, col);
+          // return [];
+          continue;
         }
         if (this.grid[row][col] === '' && piece.at(row, col) === '') {
           isFull = false;
@@ -143,7 +154,7 @@ export class Board {
           line += this.grid[row][col];
         }
       }
-      if (isFull) {
+      if (isFull && line.length > 0) {
         linesToBeCleared.push(line);
       }
     }
@@ -179,8 +190,9 @@ export class Board {
   }
 
   print() {
-    console.log(
-      this.grid.map((line) => line.map((c) => (c.length ? c : ' ')).join('')).join('|\n') + '|'
-    );
+    const rows = this.grid.map((line) => line.map((c) => (c.length ? c : ' ')).join(''));
+    for (const [i, row] of Object.entries(rows)) {
+      console.log(row + '|' + i);
+    }
   }
 }

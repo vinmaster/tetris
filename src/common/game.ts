@@ -5,7 +5,6 @@ import { User } from './user';
 export class Game {
   users: { [userId: string]: User } = {};
   boards: { [userId: string]: Board } = {};
-  currentPiece: Piece = new Piece('O');
   pieceHistory: string[] = [];
   gameState: 'WAITING' | 'START' | 'PAUSED' | 'GAME_OVER' = 'WAITING';
   // linesCleared = {};
@@ -13,14 +12,9 @@ export class Game {
   // score = {};
   paused = true;
 
-  constructor() {
-    this.pieceHistory = this.pieceHistory.concat(this.getNewPieces(10));
-  }
-
   teardown() {
     this.users = {};
     this.boards = {};
-    this.currentPiece = new Piece('O');
     this.pieceHistory = [];
     // this.linesCleared = {};
     // this.totalPieces = {};
@@ -36,7 +30,6 @@ export class Game {
   addUser(user: User) {
     if (!this.users[user.userId]) {
       user.pieceIndex = -1;
-      user.state = 'WAITING';
       this.users[user.userId] = user;
       this.boards[user.userId] = new Board();
     }
@@ -45,6 +38,9 @@ export class Game {
   removeUser(userId) {
     delete this.users[userId];
     delete this.boards[userId];
+    if (Object.keys(this.users).length === 0) {
+      this.gameState = 'WAITING';
+    }
   }
 
   listUsers(): User[] {
@@ -73,20 +69,41 @@ export class Game {
     return new Piece(this.pieceHistory[this.users[userId].pieceIndex]);
   }
 
+  swapHold(userId: string) {
+    if (!userId) return;
+    const board = this.boards[userId];
+    if (board.holdPiece) {
+      const temp = board.currentPiece;
+      board.currentPiece = board.holdPiece;
+      board.holdPiece = temp;
+    } else {
+      board.holdPiece = board.currentPiece;
+      board.currentPiece = this.getNextPiece(userId);
+    }
+    board.currentPiece.row = 0;
+  }
+
   update() {
-    // Check inputs
+    if (this.gameState !== 'START') return;
 
     for (const userId of Object.keys(this.users)) {
-      console.log('piecehistory', this.users[userId].pieceIndex, this.pieceHistory);
       const board = this.boards[userId];
+      // console.log('current', board.currentPiece);
       if (!board.currentPiece) board.currentPiece = this.getNextPiece(userId);
 
-      // TODO: shift down by gravity
       if (!board.currentPiece.shiftDownOnBoard(board)) {
         const linesToBeCleared = board.getLinesToBeClearedBy(board.currentPiece);
-        board.addPiece(board.currentPiece);
         if (linesToBeCleared.length > 0) {
+          board.addPiece(board.currentPiece);
           board.clearLines();
+        } else {
+          board.addPiece(board.currentPiece);
+        }
+        board.currentPiece = this.getNextPiece(userId);
+        // Check gameover
+        if (!board.currentPiece.isValidMoveOnBoard(0, 1, board.currentPiece.data, board)) {
+          console.log('game over');
+          this.gameState = 'GAME_OVER';
         }
       }
 

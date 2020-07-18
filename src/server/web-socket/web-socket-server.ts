@@ -61,20 +61,25 @@ export class WebSocketServer {
         socket.join('chatroom');
       }
 
-      this.broadcastTo(CONSTANTS.SOCKET.UPDATE_GAME_STATE, this.gameServer.gameState, socket);
       this.broadcastTo(CONSTANTS.SOCKET.REGISTERED, user, socket);
       this.broadcastAll(CONSTANTS.SOCKET.ADD_USER, user, socket);
+      this.broadcastAll(CONSTANTS.SOCKET.UPDATE_PIECES, this.gameServer.pieceHistory);
+      this.broadcastTo(CONSTANTS.SOCKET.UPDATE_GAME_STATE, this.gameServer.gameState, socket);
     });
 
     socket.on(CONSTANTS.SOCKET.UPDATE_BOARDS, () => {
       this.broadcastAll(CONSTANTS.SOCKET.UPDATE_BOARDS, this.gameServer.boards);
     });
 
-    socket.on(CONSTANTS.SOCKET.STATE_CHANGE, (state) => {
+    socket.on(CONSTANTS.SOCKET.UPDATE_SINGLE_BOARD, (data) => {
+      this.broadcastAll(CONSTANTS.SOCKET.UPDATE_SINGLE_BOARD, data);
+    });
+
+    socket.on(CONSTANTS.SOCKET.USER_STATE_CHANGE, (state) => {
       const user = this.sockets[socket.id];
       this.gameServer.updateState(user.userId, state);
 
-      this.broadcastAll(CONSTANTS.SOCKET.STATE_CHANGE, user);
+      this.broadcastAll(CONSTANTS.SOCKET.USER_STATE_CHANGE, user);
     });
   }
 

@@ -32,12 +32,23 @@ export class Piece {
     }
   }
 
+  static cloneFrom(obj): Piece | null {
+    if (!obj || Object.keys(obj).length === 0) return null;
+    const piece = new Piece(obj.type);
+    piece.data = Utility.clone2dArray(obj.data);
+    piece.setProperties(obj.type);
+    piece.posIndex = obj.posIndex;
+    piece.row = obj.row;
+    piece.col = obj.col;
+    return piece;
+  }
+
   setProperties(type) {
     switch (type) {
       case 'I':
         this.positions = CONSTANTS.POSITIONS_I;
         this.kickData = CONSTANTS.KICK_DATA_I;
-        [this.col, this.row] = [2, -1];
+        [this.col, this.row] = [3, -1];
         break;
       case 'J':
         this.positions = CONSTANTS.POSITIONS_J;
@@ -140,7 +151,7 @@ export class Piece {
 
     for (let i = 0, len = this.kickData[0].length; i < len; i++) {
       const [dx, dy] = this.kickData[this.position][i];
-      if (this.isValidMoveOnBoard(this.col + dx, Math.floor(this.row + dy), rotated, board)) {
+      if (this.isValidMoveOnBoard(dx, dy, rotated, board)) {
         this.col += dx;
         this.row += dy;
         this.position = newPos;
@@ -153,16 +164,18 @@ export class Piece {
   }
 
   isValidMoveOnBoard(dx, dy, data, board: Board): boolean {
+    const x = this.col + dx;
+    const y = Math.floor(this.row + dy);
     for (let row = 0; row < data.length; row++) {
       for (let col = 0; col < data[row].length; col++) {
         if (
           data[row][col] &&
-          (dy + row < 0 ||
-            dx + col < 0 ||
-            dy + row >= board.height ||
-            dx + col >= board.width ||
-            board.grid[dy + row] === undefined ||
-            board.grid[dy + row][dx + col].length > 0)
+          (y + row < 0 ||
+            x + col < 0 ||
+            y + row >= board.height ||
+            x + col >= board.width ||
+            board.grid[y + row] === undefined ||
+            board.grid[y + row][x + col].length > 0)
         ) {
           return false;
         }

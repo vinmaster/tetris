@@ -25,6 +25,14 @@ export class Utility {
     return ((i % n) + n) % n;
   }
 
+  static clone2dArray(array: any[][]) {
+    let clone: any[][] = [];
+    for (let row = 0; row < array.length; row++) {
+      clone[row] = array[row].slice();
+    }
+    return clone;
+  }
+
   static createUUID() {
     let d0 = (Math.random() * 0x100000000) | 0;
     let d1 = (Math.random() * 0x100000000) | 0;

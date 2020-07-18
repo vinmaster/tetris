@@ -17,7 +17,7 @@ describe('Piece', () => {
   });
 
   it('should rotate clockwise', () => {
-    // piece.row += 5;
+    piece.row += 5;
     // piece.col 3;
     piece.rotateOnBoard(90, board);
     expect(piece.posIndex).eq(1);
@@ -64,7 +64,7 @@ describe('Piece', () => {
     piece.hardDropOnBoard(board);
     board.addPiece(piece);
     // console.log(board.print());
-    expect(piece.row).eq(20);
+    expect(piece.row).eq(18);
   });
 
   describe('L kick tests', () => {

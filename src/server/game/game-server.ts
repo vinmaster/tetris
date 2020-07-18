@@ -7,6 +7,7 @@ import { User } from '@/common/user';
 export class GameServer extends Game {
   constructor() {
     super();
+    this.pieceHistory = this.pieceHistory.concat(this.getNewPieces(100));
   }
 
   addUser(user: User, broadcast = true) {
@@ -14,6 +15,7 @@ export class GameServer extends Game {
     super.addUser(user);
 
     user.role = 'User';
+    user.state = this.gameState === 'WAITING' ? 'WAITING' : 'PLAYING';
     user.usernameColor = Utility.getRandomColor();
     this.validateAndSetUsername(user);
 

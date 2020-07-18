@@ -4,7 +4,7 @@
       <div
         class="tile"
         v-for="(tile, colIndex) in row"
-        :key="colIndex + tile"
+        :key="rowIndex + colIndex"
         :style="tileStyle"
         :class="{
           modern: skin === 'modern',
@@ -13,6 +13,21 @@
           ['type-' + tile]: tile,
         }"
       ></div>
+    </div>
+    <div id="currentPiece" v-if="board.currentPiece" :style="currentPieceStyle()">
+      <div class="row" v-for="(row, rowIndex) in board.currentPiece.data" :key="rowIndex">
+        <div
+          v-for="(tile, colIndex) in row"
+          :key="rowIndex + colIndex"
+          :style="tileStyle"
+          :class="{
+            modern: skin === 'modern',
+            flat: skin === 'flat',
+            classic: skin === 'classic',
+            ['tile type-' + board.currentPiece.type]: tile != '',
+          }"
+        ></div>
+      </div>
     </div>
   </div>
 </template>
@@ -42,7 +57,13 @@ export default class GameBoard extends Vue {
     width: '100%',
     visibility: 'hidden',
   };
-  tileStyle = {};
+  tileStyle: {
+    width: string;
+    height: string;
+  } = {
+    width: '',
+    height: '',
+  };
 
   $refs!: {
     element: HTMLDivElement;
@@ -62,7 +83,7 @@ export default class GameBoard extends Vue {
 
   get computedBoard() {
     if (!this.board.grid) return [];
-    return this.board.grid.slice(Math.max(this.board.grid.length - 20, 0))
+    return this.board.grid.slice(Math.max(this.board.grid.length - 20, 0));
   }
 
   // beforeDestroy() {
@@ -99,6 +120,16 @@ export default class GameBoard extends Vue {
       visibility: 'visible',
     };
   }
+
+  currentPieceStyle() {
+    const size = parseFloat(this.tileStyle.width.slice(0, -2));
+
+    if (!this.board.currentPiece) return {};
+    return {
+      top: size * this.board.currentPiece.row + 'px',
+      left: size * this.board.currentPiece.col + 'px',
+    };
+  }
 }
 </script>
 
@@ -110,6 +141,11 @@ export default class GameBoard extends Vue {
   display: flex;
   flex-direction: column;
   padding: 0;
+  position: relative;
+}
+
+#currentPiece {
+  position: absolute;
 }
 
 .row {

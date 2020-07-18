@@ -32,8 +32,8 @@ export class GameClient extends Game {
       this.socket.client.emit(CONSTANTS.SOCKET.UPDATE_BOARDS);
     });
 
-    EventBus.$on('STATE_CHANGE', (state) => {
-      this.socket.client.emit(CONSTANTS.SOCKET.STATE_CHANGE, state);
+    EventBus.$on('BUS_STATE_CHANGE', (state) => {
+      this.socket.client.emit(CONSTANTS.SOCKET.USER_STATE_CHANGE, state);
     });
 
     // EventBus.$on('NOT_READY', () => {
@@ -59,8 +59,10 @@ export class GameClient extends Game {
     this.fps = newFps;
 
     // Perform update
-    if (this.secondsPassed + this.lastUpdate > 3) {
+    const seconds = 0.5;
+    if (this.secondsPassed + this.lastUpdate > seconds) {
       this.update();
+      this.updateView();
       this.lastUpdate = 0;
     } else {
       this.lastUpdate += this.secondsPassed;
@@ -77,6 +79,18 @@ export class GameClient extends Game {
     }
   }
 
+  updateView() {
+    EventBus.$emit(CONSTANTS.SOCKET.UPDATE_GAME_STATE, this.gameState);
+    EventBus.$emit('UPDATE_SINGLE_BOARD', {
+      userId: this.currentUser.userId,
+      board: this.boards[this.currentUser.userId],
+    });
+    this.socket.client.emit(CONSTANTS.SOCKET.UPDATE_SINGLE_BOARD, {
+      userId: this.currentUser.userId,
+      board: this.boards[this.currentUser.userId],
+    });
+  }
+
   // this.board.removePiece(this.current);
 
   //   this.board.addPiece(this.current);
@@ -90,26 +104,47 @@ export class GameClient extends Game {
       event.stopPropagation();
       return;
     }
-    console.log('key', keyCode);
+    // console.log('key', keyCode);
+    let updateView = false;
 
-    const [UP, DOWN, LEFT, RIGHT, X] = [38, 40, 37, 39, 88];
-
-    if ([UP, X].includes(keyCode)) {
-      // const turned = this.current.rotateOnBoard(90, this.board);
+    const board = this.boards[this.currentUser.userId];
+    if ([CONSTANTS.KEYCODES.X].includes(keyCode)) {
+      board?.currentPiece?.rotateOnBoard(90, board);
       event.preventDefault();
-    } else if (keyCode === DOWN) {
-      // this.current.shiftDownOnBoard(this.board);
-      event.preventDefault();
-    } else if (keyCode === LEFT) {
-      event.preventDefault();
-    } else if (keyCode === RIGHT) {
+      updateView = true;
+    }
+    if (keyCode === CONSTANTS.KEYCODES.DOWN) {
+      board?.currentPiece?.shiftDownOnBoard(board);
+      updateView = true;
       event.preventDefault();
     }
+
+    if (keyCode === CONSTANTS.KEYCODES.LEFT) {
+      board?.currentPiece?.shiftLeftRightOnBoard('left', board);
+      updateView = true;
+      event.preventDefault();
+    } else if (keyCode === CONSTANTS.KEYCODES.RIGHT) {
+      board.currentPiece?.shiftLeftRightOnBoard('right', board);
+      updateView = true;
+      event.preventDefault();
+    }
+
+    if ([CONSTANTS.KEYCODES.UP, CONSTANTS.KEYCODES.SPACE].includes(keyCode)) {
+      board?.currentPiece?.hardDropOnBoard(board);
+      updateView = true;
+      event.preventDefault();
+    }
+
+    if ([CONSTANTS.KEYCODES.C].includes(keyCode)) {
+      this.swapHold(this.currentUser.userId);
+    }
+
+    if (updateView) this.updateView();
     return false;
   }
 
   get socketListeners() {
-    let that = this;
+    let THIS = this;
     return {
       connect() {
         console.log('[connected]');
@@ -135,11 +170,11 @@ export class GameClient extends Game {
         localStorage.setItem('username', username);
       },
       REGISTERED(user) {
-        that.currentUser = user;
-        that.addUser(user);
-        console.log('Registered', user);
-        that.currentUser = user;
-        //         that.boards[user.userId].grid = that.boards[user.userId].getGridFromString(
+        THIS.currentUser = user;
+        THIS.addUser(user);
+        THIS.users[user.userId].state = user.state;
+        EventBus.$emit('UPDATE_USER_STATE', user);
+        //         THIS.boards[user.userId].grid = THIS.boards[user.userId].getGridFromString(
         //           ` .  .
         // OO ZZ  SS
         // OO  ZZSS
@@ -149,30 +184,37 @@ export class GameClient extends Game {
         // I  LLJJ..T`,
         //           false
         //         );
-        that.socket.client.emit(CONSTANTS.SOCKET.UPDATE_BOARDS);
+        // THIS.socket.client.emit(CONSTANTS.SOCKET.UPDATE_BOARDS);
       },
-      ADD_USER(user) {
-        that.addUser(user);
-        that.socket.client.emit(CONSTANTS.SOCKET.UPDATE_BOARDS);
+      [CONSTANTS.SOCKET.ADD_USER](user) {
+        THIS.addUser(user);
       },
-      REMOVE_USER(userId) {
-        that.removeUser(userId);
+      [CONSTANTS.SOCKET.REMOVE_USER](userId) {
+        THIS.removeUser(userId);
+        EventBus.$emit(CONSTANTS.SOCKET.REMOVE_USER, userId);
       },
-      READY(data) {
+      [CONSTANTS.STATES.READY](data) {
         console.log('READY', data);
       },
-      UPDATE_BOARDS(boards) {
+      [CONSTANTS.SOCKET.UPDATE_BOARDS](boards) {
         EventBus.$emit('UPDATE_BOARDS', boards);
       },
-      UPDATE_PIECES(pieceHistory) {
-        that.pieceHistory = pieceHistory;
+      [CONSTANTS.SOCKET.UPDATE_SINGLE_BOARD](data) {
+        // if (!data || !THIS.currentUser || data.userId === THIS.currentUser.userId) return;
+        if (!THIS.currentUser) return;
+        EventBus.$emit('UPDATE_SINGLE_BOARD', data);
       },
-      UPDATE_GAME_STATE(state) {
-        that.updateGameState(state);
+      [CONSTANTS.SOCKET.UPDATE_PIECES](pieceHistory) {
+        THIS.pieceHistory = pieceHistory;
+      },
+      [CONSTANTS.SOCKET.UPDATE_GAME_STATE](state) {
+        THIS.updateGameState(state);
         EventBus.$emit('UPDATE_GAME_STATE', state);
       },
-      STATE_CHANGE(user) {
-        that.users[user.userId].state = user.state;
+      [CONSTANTS.SOCKET.USER_STATE_CHANGE](user) {
+        console.log(user);
+        if (!THIS.users[user.userId]) return;
+        THIS.users[user.userId].state = user.state;
         EventBus.$emit('UPDATE_USER_STATE', user);
       },
 
