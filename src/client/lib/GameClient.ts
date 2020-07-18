@@ -108,7 +108,7 @@ export class GameClient extends Game {
     let updateView = false;
 
     const board = this.boards[this.currentUser.userId];
-    if ([CONSTANTS.KEYCODES.X].includes(keyCode)) {
+    if ([CONSTANTS.KEYCODES.UP, CONSTANTS.KEYCODES.X].includes(keyCode)) {
       board?.currentPiece?.rotateOnBoard(90, board);
       event.preventDefault();
       updateView = true;
@@ -129,7 +129,7 @@ export class GameClient extends Game {
       event.preventDefault();
     }
 
-    if ([CONSTANTS.KEYCODES.UP, CONSTANTS.KEYCODES.SPACE].includes(keyCode)) {
+    if ([CONSTANTS.KEYCODES.SPACE].includes(keyCode)) {
       board?.currentPiece?.hardDropOnBoard(board);
       updateView = true;
       event.preventDefault();

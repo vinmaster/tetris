@@ -84,7 +84,7 @@ export default class Chat extends Vue {
   userInput = '';
   messages: Message[] = [
     {
-      text: 'Controls - Arrow Keys, X = rotate, C = hold',
+      text: 'Controls - Arrow Keys = Move, UP = rotate, C = hold, SPACE = hard drop',
       timestamp: new Date(),
       username: 'SYSTEM',
     },
